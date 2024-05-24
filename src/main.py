@@ -1,6 +1,7 @@
 from minio.error import S3Error
 from dotenv import load_dotenv
 import logging
+from storage_github import StorageGitHub
 
 from storage_minio import StorageMinio
 
@@ -19,10 +20,11 @@ def main():
     # The destination bucket and filename on the MinIO server
     destination_file = "my-test-file-2.txt"
 
-    storage = StorageMinio()
-    storage.upload_images({destination_file: source_file})
+    #storage = StorageMinio()
+    #storage.upload_images({destination_file: source_file})
 
-
+    github = StorageGitHub()
+    
 if __name__ == "__main__":
     try:
         main()

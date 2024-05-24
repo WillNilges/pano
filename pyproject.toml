@@ -5,5 +5,6 @@ version = "0.0.1"
 dependencies = [
 	"minio==7.2.*",
 	"PyGithub==2.3.*",
-    "python-dotenv==1.0.*",
+	"python-dotenv==1.0.*",
+	"GitPython==3.1.*",
 ]
