@@ -1,7 +1,7 @@
+from flask import Flask
 from minio.error import S3Error
 from dotenv import load_dotenv
 import logging
-from meshdb_client import MeshdbClient
 from pano import Pano
 from storage import Storage
 #from storage_git import StorageGit
@@ -12,8 +12,6 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 log = logging.getLogger("pano")
-
-WORKING_DIRECTORY = "/var/pano"
 
 def main() -> None:
     load_dotenv()
@@ -42,6 +40,17 @@ def main() -> None:
 
     ## Sync GitHub to MinIO
     #sync(github, storage)
+
+    
+    flask_app = Flask(__name__)
+
+    @flask_app.route("/submit", methods=["POST"])
+    def respond():
+        pano.handle_upload(10071, "")
+
+    flask_app.run(host="127.0.0.1", port=8089, debug=False)
+
+
 
 def sync(source_storage: Storage, destination_storage: Storage) -> None:
     pass
