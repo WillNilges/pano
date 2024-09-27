@@ -7,3 +7,22 @@ class Storage(ABC):
     @abstractmethod
     def upload_images(self, images: dict[str, str]) -> None:
         pass
+
+    # Returns a list of all the images this storage knows about
+    # Returns a list of paths or URLs
+    # Example: ["/path/to/a", "/path/to/b", "/path/to/c", ...]
+    @abstractmethod
+    def get_all_images(self) -> list[str]:
+        pass
+
+
+    # Returns a list of all the images this storage knows about, while also
+    # handling any differences in abstraction *cough* github *cough*
+    # Returns a dictionary mapping Install Numbers(?) to a list of paths
+    # Example: {
+    # 1001: ["/path/to/a", "/path/to/b", ...],
+    # 1002: ["/path/to/a", "/path/to/b", ...]
+    # }
+    @abstractmethod
+    def get_inventory(self) -> dict[int, list[str]]:
+        pass
