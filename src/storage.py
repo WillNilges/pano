@@ -8,13 +8,18 @@ class Storage(ABC):
     def upload_images(self, images: dict[str, str]) -> None:
         pass
 
+    # Downloads images from this storage interface
+    # Takes a list of file paths, and returns the path/url where they are stored.
+    @abstractmethod
+    def download_images(self, images: list[str]) -> list[str]:
+        pass
+
     # Returns a list of all the images this storage knows about
     # Returns a list of paths or URLs
     # Example: ["/path/to/a", "/path/to/b", "/path/to/c", ...]
     @abstractmethod
-    def get_all_images(self) -> list[str]:
+    def list_all_images(self) -> list[str]:
         pass
-
 
     # Returns a list of all the images this storage knows about, while also
     # handling any differences in abstraction *cough* github *cough*
@@ -23,6 +28,6 @@ class Storage(ABC):
     # 1001: ["/path/to/a", "/path/to/b", ...],
     # 1002: ["/path/to/a", "/path/to/b", ...]
     # }
-    @abstractmethod
-    def get_inventory(self) -> dict[int, list[str]]:
-        pass
+    #@abstractmethod
+    #def get_inventory(self) -> dict[int, list[str]]:
+    #    pass

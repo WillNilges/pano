@@ -1,5 +1,6 @@
 import logging
 import os
+from main import WORKING_DIRECTORY
 from minio import Minio
 
 from storage import Storage
@@ -38,3 +39,21 @@ class StorageMinio(Storage):
                 self.bucket, path, file,
             )
             log.info(f"Uploaded {file} to {path} in {self.bucket}")
+
+    def download_images(self, images: list[str]) -> list[str]:
+        images = []
+        try:
+            for file in images:
+                title = file.split("/")[-1]
+                path = f"{WORKING_DIRECTORY}/minio/{title}"
+                self.client.fget_object(self.bucket, file, path)
+                images.append(path)
+        except Exception: # TODO: Better error handling?
+            logging.exception("Could not download some images")
+            return []
+
+        return images
+
+
+    def list_all_images(self) -> list[str]:
+        return self.client.list_objects()
