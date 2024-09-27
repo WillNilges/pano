@@ -1,6 +1,5 @@
 import logging
 import os
-from main import WORKING_DIRECTORY
 from minio import Minio
 
 from storage import Storage
@@ -15,7 +14,7 @@ class StorageMinio(Storage):
         minio_access_key = os.environ["MINIO_ACCESS_KEY"]
         minio_secret_key = os.environ["MINIO_SECRET_KEY"] 
         self.bucket      = os.environ["MINIO_BUCKET"]
-        minio_secure     = False if os.environ["PANO_MINIO_SECURE"] == "False" else True 
+        minio_secure     = False if os.environ["MINIO_SECURE"] == "False" else True 
 
         # Create a client with the MinIO server playground, its access key
         # and secret key.
