@@ -1,8 +1,9 @@
 from minio.error import S3Error
 from dotenv import load_dotenv
 import logging
-from storage_github import StorageGitHub
-
+from meshdb_client import MeshdbClient
+from storage import Storage
+from storage_git import StorageGit
 from storage_minio import StorageMinio
 
 logging.basicConfig(
@@ -14,16 +15,26 @@ log = logging.getLogger("pano")
 def main():
     load_dotenv()
 
-    # The file to upload, change this path if needed
-    source_file = "/tmp/test-file.txt"
+    meshdb = MeshdbClient()
+    installs = meshdb.get_all_installs()
+    log.info(installs)
 
-    # The destination bucket and filename on the MinIO server
-    destination_file = "my-test-file-2.txt"
+    return
 
-    #storage = StorageMinio()
+    # Initialize the Minio Bucket
+    storage = StorageMinio()
     #storage.upload_images({destination_file: source_file})
 
-    github = StorageGitHub()
+    # Clone and/or sync repo
+    github = StorageGit()
+    github.clone_repo()
+    github.sync_repo()
+
+    # Sync GitHub to MinIO
+    sync(github, storage)
+
+def sync(source_storage: Storage, destination_storage: Storage):
+    pass
     
 if __name__ == "__main__":
     try:
