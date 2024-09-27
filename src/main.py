@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import logging
 from meshdb_client import MeshdbClient
 from storage import Storage
-from storage_git import StorageGit
+#from storage_git import StorageGit
 from storage_minio import StorageMinio
 
 logging.basicConfig(
@@ -16,8 +16,8 @@ def main():
     load_dotenv()
 
     meshdb = MeshdbClient()
-    installs = meshdb.get_all_installs()
-    log.info(installs)
+    #installs = meshdb.get_all_installs()
+    #log.info(installs)
 
     return
 
