@@ -41,3 +41,13 @@ class MeshdbClient():
                 log.exception("Exception when calling InstallsApi->api_v1_installs_list.")
 
         return installs
+
+    def get_building_panos(self, building_id: str) -> list[str]:
+        building_panos = []
+        with pymeshdb.ApiClient(self.config) as api_client:
+            # Create an instance of the API class
+            api = pymeshdb.BuildingsApi(api_client)
+            building = api.api_v1_buildings_retrieve(id=building_id)
+            building_panos = building.panoramas
+        return building_panos
+
