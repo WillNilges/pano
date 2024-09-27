@@ -10,10 +10,10 @@ class StorageMinio(Storage):
     def __init__(self) -> None:
         log.info("Configuring Minio Storage...")
         # Get env vars like this so that we crash if they're missing
-        minio_url        = os.environ["PANO_MINIO_URL"]
-        minio_access_key = os.environ["PANO_MINIO_ACCESS_KEY"]
-        minio_secret_key = os.environ["PANO_MINIO_SECRET_KEY"] 
-        self.bucket      = os.environ["PANO_MINIO_BUCKET"]
+        minio_url        = os.environ["MINIO_URL"]
+        minio_access_key = os.environ["MINIO_ACCESS_KEY"]
+        minio_secret_key = os.environ["MINIO_SECRET_KEY"] 
+        self.bucket      = os.environ["MINIO_BUCKET"]
         minio_secure     = False if os.environ["PANO_MINIO_SECURE"] == "False" else True 
 
         # Create a client with the MinIO server playground, its access key

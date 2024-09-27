@@ -9,10 +9,10 @@ log = logging.getLogger("pano.meshdb_client")
 class MeshdbClient():        
     def __init__(self):
         self.config = pymeshdb.Configuration(
-            host=os.environ["PANO_MESHDB_ENDPOINT"],
-            access_token=os.environ["PANO_MESHDB_TOKEN"],
+            host=os.environ["MESHDB_ENDPOINT"],
+            access_token=os.environ["MESHDB_TOKEN"],
 
-            api_key={'tokenAuth': os.environ["PANO_MESHDB_TOKEN"]},
+            api_key={'tokenAuth': os.environ["MESHDB_TOKEN"]},
             api_key_prefix={'tokenAuth': 'Token'},
         )
 
@@ -41,15 +41,3 @@ class MeshdbClient():
                 log.exception("Exception when calling InstallsApi->api_v1_installs_list.")
 
         return installs
-
-    # FIXME (willnilges): This is yak shaving 
-    def map_installs_to_nns(self) -> dict[int, list[int]]:
-        mapped_installs = {}
-        installs = self.get_all_installs()
-
-        # XXX(willnilges): I don't believe that this API response will ever
-        # map an install to more than one NN, so this should be fine.
-        for install in installs:
-            mapped_installs[install.install_number] = install.network_number
-
-        return mapped_installs
