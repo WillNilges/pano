@@ -18,6 +18,8 @@ def main():
     meshdb = MeshdbClient()
     #installs = meshdb.get_all_installs()
     #log.info(installs)
+    panos = meshdb.get_building_panos("015c006f-edb8-49a1-bf3e-8728c867b1ca")
+    print(panos)
 
     return
 
