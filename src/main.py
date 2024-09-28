@@ -20,27 +20,6 @@ def main() -> None:
 
     panos = pano.meshdb.get_building_panos("015c006f-edb8-49a1-bf3e-8728c867b1ca")
     print(panos)
-
-    #meshdb = MeshdbClient()
-    ##installs = meshdb.get_all_installs()
-    ##log.info(installs)
-    #panos = meshdb.get_building_panos("015c006f-edb8-49a1-bf3e-8728c867b1ca")
-    #print(panos)
-
-    #return
-
-    ## Initialize the Minio Bucket
-    #storage = StorageMinio()
-    ##storage.upload_images({destination_file: source_file})
-
-    ## Clone and/or sync repo
-    #github = StorageGit()
-    #github.clone_repo()
-    #github.sync_repo()
-
-    ## Sync GitHub to MinIO
-    #sync(github, storage)
-
     
     flask_app = Flask(__name__)
 
