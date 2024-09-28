@@ -37,6 +37,8 @@ class Pano():
 
         # This means that there's gotta already be one panorama.
         if not last_letter:
-            raise ValueError("Where's the letter? There should be a letter.")
+            raise ValueError("Could not determine image naming sequence.")
 
+        return ""
 
+        
