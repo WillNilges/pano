@@ -37,25 +37,39 @@ def main() -> None:
 
     @flask_app.route("/upload", methods=["POST"])
     def upload():
-        print(request.files)
-        # check if the post request has the file part
-        if "dropzone-files" not in request.files:
-            print("no file part!")
-            return "No file part!", 400
+        #print(request.headers["Install"])
+        #print(request.files)
 
-        print(request.files)
-        #file = request.files["files[]"]
-        my_files = request.files.getlist("dropzone-files")
+        if "Install" not in request.headers:
+            logging.error("Bad Request! Missing Install # from header.")
+        # check if the post request has the file part
+        if "dropzone_files" not in request.files:
+            logging.error("Bad Request! Found no files.")
+            return "Found no files. Maybe the request is malformed?", 400
+
+        try:
+            install_number = int(request.headers["Install"])
+        except ValueError:
+            logging.exception("Bad Request! Install # wasn't an integer.")
+            return "Install # wasn't an integer", 400
+
+        my_files = request.files.getlist("dropzone_files")
         for file in my_files:
             # If the user does not select a file, the browser submits an
             # empty file without a filename.
             if not file.filename:
-                flash("No selected file")
-                return redirect(request.url)
+                logging.error("No filename?")
+                return "No filename?", 400
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                file.save(os.path.join(flask_app.config["UPLOAD_FOLDER"], filename))
-        return "Success"
+                file_path = os.path.join(flask_app.config["UPLOAD_FOLDER"], filename)
+                file.save(file_path)
+                try:
+                    pano.handle_upload(install_number, file_path)
+                except ValueError as e:
+                    logging.exception("Bad Request! Could not find a building associated with that Install #")
+                    return e, 400
+        return ""
 
     @flask_app.route("/", methods=["GET", "POST"])
     def home():
