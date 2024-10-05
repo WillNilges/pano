@@ -42,8 +42,8 @@ def main() -> None:
 
     @flask_app.route("/upload", methods=["POST"])
     def upload():
-        #print(request.headers["Install"])
-        #print(request.files)
+        # print(request.headers["Install"])
+        # print(request.files)
 
         if "Install" not in request.headers:
             logging.error("Bad Request! Missing Install # from header.")
@@ -75,7 +75,9 @@ def main() -> None:
                 try:
                     pano.handle_upload(install_number, file_path)
                 except ValueError as e:
-                    logging.exception("Bad Request! Could not find a building associated with that Install #")
+                    logging.exception(
+                        "Bad Request! Could not find a building associated with that Install #"
+                    )
                     return e, 400
                 except pymeshdb.exceptions.BadRequestException:
                     logging.exception("Problem communicating with MeshDB.")

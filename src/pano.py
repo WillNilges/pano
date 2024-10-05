@@ -21,7 +21,7 @@ class Pano:
             raise ValueError("Could not find a building associated with that Install #")
 
         # Upload object to S3
-        suffix = PurePosixPath(file_path).suffix 
+        suffix = PurePosixPath(file_path).suffix
         letter = self.minio.get_next_object_letter(install_number)
         object_name = f"{install_number}{letter}{suffix}"
         self.minio.upload_images({object_name: file_path})
@@ -42,7 +42,7 @@ class Pano:
     # value and let you know if there's a pre-existing file. Else, I'll give it
     # the next letter in the sequence.
 
-    def validate_filenames(self, files) -> bool: 
+    def validate_filenames(self, files) -> bool:
         p = re.compile("^(\\d)+([a-z])*.([a-z])*")
         for f in files:
             filename = f.filename
@@ -50,4 +50,3 @@ class Pano:
             if match.span() != (0, len(filename)):
                 return False
         return True
-
