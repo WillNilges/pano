@@ -1,8 +1,9 @@
 from flask import Flask, request
 from flask_cors import CORS
 from minio.error import S3Error
-from dotenv import load_dotenv
 import logging
+
+import pymeshdb
 from pano import Pano
 from storage import Storage
 
@@ -20,8 +21,6 @@ log = logging.getLogger("pano")
 
 
 def main() -> None:
-    load_dotenv()
-
     pano = Pano()
 
     flask_app = Flask(__name__)
@@ -69,6 +68,9 @@ def main() -> None:
                 except ValueError as e:
                     logging.exception("Bad Request! Could not find a building associated with that Install #")
                     return e, 400
+                except pymeshdb.exceptions.BadRequestException:
+                    logging.exception("Problem communicating with MeshDB.")
+                    return "There was a problem communicating with MeshDB.", 500
         return ""
 
     @flask_app.route("/", methods=["GET", "POST"])

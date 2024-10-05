@@ -1,5 +1,8 @@
+import logging
+from pathlib import PurePosixPath
 import uuid
 from meshdb_client import MeshdbClient
+from settings import MINIO_URL
 from storage_minio import StorageMinio
 
 
@@ -17,9 +20,19 @@ class Pano:
             raise ValueError("Could not find a building associated with that Install #")
 
         # Upload object to S3
-        object_name = f"{install_number}/{uuid.uuid4}"
+        suffix = PurePosixPath(file_path).suffix 
+        object_name = f"{install_number}/{uuid.uuid4()}{suffix}"
         self.minio.upload_images({object_name: file_path})
 
         # Save link to object in MeshDB
-        self.meshdb.save_panorama_on_building(building.id, object_name)
-        print("Mock 200 OK")
+        url = f"http://{MINIO_URL}/{object_name}"
+        logging.info(url)
+        self.meshdb.save_panorama_on_building(building.id, url)
+
+    # TODO: Could we have a route to check the file names and see if there are
+    # dupes?
+
+    # Maybe we enforce a naming scheme with a regex.
+    # If you give me a file with the correct format, I'll take it at face
+    # value and let you know if there's a pre-existing file. Else, I'll give it
+    # the next letter in the sequence.
