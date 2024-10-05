@@ -21,10 +21,14 @@ class Pano:
 
         # Upload object to S3
         suffix = PurePosixPath(file_path).suffix 
-        object_name = f"{install_number}/{uuid.uuid4()}{suffix}"
+        letter = self.minio.get_next_object_letter(install_number)
+        object_name = f"{install_number}{letter}{suffix}"
         self.minio.upload_images({object_name: file_path})
 
         # Save link to object in MeshDB
+        # TODO: Perhaps it would be better to completely re-build the panorama
+        # list for that particular building each time we save? Edge case on that:
+        # we don't want to blow away panoramas from other installs.
         url = f"http://{MINIO_URL}/{object_name}"
         logging.info(url)
         self.meshdb.save_panorama_on_building(building.id, url)

@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import PurePosixPath
 from minio import Minio
 
 from settings import MINIO_BUCKET, MINIO_URL
@@ -59,9 +60,30 @@ class StorageMinio(Storage):
     def list_all_images(self) -> list[str]:
         return self.client.list_objects(self.bucket)
 
-    def get_next_object_name(self, install_number: int) -> str:
+    # FIXME: There _must_ be a library out there that will let you turn a number
+    # into an excel column (27 = AA or whatever). Limitation with this is that
+    # it only works up to 26.
+    def get_next_object_letter(self, install_number: int) -> str:
         objects = self.client.list_objects(self.bucket, prefix=str(install_number))
-        if not objects:
-            return f"{install_number}/0"
 
-        last_object_number = objects[-1].strip("")
+        # If there are no objects for this install number yet, then return an empty
+        # string (is this valid? What if I just prepend the install number)
+        if not objects:
+            return ""
+
+        # We can figure out what letter we want by checking the # of objects
+        # 0 objects: no letter
+        # 1 object: a
+        # 2 objects: b
+        # 3 objexts: c
+        # and so on
+
+        # Count the number of objects
+        number_of_objects = 0
+        for _ in objects:
+            number_of_objects += 1
+
+        # 97 is 'a' in ASCII. Subtract one because at this point we know we already
+        # have the "no letter" case, so we gotta go over by 1
+        next_letter = chr(97 + number_of_objects - 1)
+        return next_letter
