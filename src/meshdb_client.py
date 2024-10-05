@@ -7,14 +7,14 @@ from pymeshdb.models.building import Building
 
 log = logging.getLogger("pano.meshdb_client")
 
-class MeshdbClient():        
+
+class MeshdbClient:
     def __init__(self):
         self.config = pymeshdb.Configuration(
             host=os.environ["MESHDB_ENDPOINT"],
             access_token=os.environ["MESHDB_TOKEN"],
-
-            api_key={'tokenAuth': os.environ["MESHDB_TOKEN"]},
-            api_key_prefix={'tokenAuth': 'Token'},
+            api_key={"tokenAuth": os.environ["MESHDB_TOKEN"]},
+            api_key_prefix={"tokenAuth": "Token"},
         )
 
     # Naively gets all installs, one page at a time.
@@ -29,7 +29,7 @@ class MeshdbClient():
 
             try:
                 another_page = True
-                page = 1 # A page number within the paginated result set. Starts at 1 for some reason.
+                page = 1  # A page number within the paginated result set. Starts at 1 for some reason.
                 while another_page:
                     log.info(f"Getting page {page}...")
                     api_response = api_instance.api_v1_installs_list(page=page)
@@ -39,17 +39,20 @@ class MeshdbClient():
                     else:
                         another_page = False
             except Exception:
-                log.exception("Exception when calling InstallsApi->api_v1_installs_list.")
+                log.exception(
+                    "Exception when calling InstallsApi->api_v1_installs_list."
+                )
 
         return installs
 
     def get_primary_building_for_install(self, install_number: int) -> Building:
         with pymeshdb.ApiClient(self.config) as api_client:
             building_api = pymeshdb.BuildingsApi(api_client)
-            buildings = building_api.api_v1_building_lookup_list(install_number=install_number)
+            buildings = building_api.api_v1_building_lookup_list(
+                install_number=install_number
+            )
             first_building = buildings.results[0]
             return first_building
-
 
     def get_building_panos(self, id: str) -> list[str]:
         building_panos = []

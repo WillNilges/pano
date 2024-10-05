@@ -23,3 +23,7 @@ Let's use MeshDB as the source of truth. When we do the big import, we'll shove 
 I definitely still want the concept of an abstract storage class. I can make a "local" one to mock Dropbox for now.
 
 I wonder if I can make meshdb use a configurable pano URL.... hmmmm. Probably too much work.
+
+---
+
+Maybe I should focus on the panorama upload to MinIO first, then we can worry about dropbox when we have wifi

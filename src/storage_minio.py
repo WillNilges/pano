@@ -6,15 +6,16 @@ from storage import Storage
 
 log = logging.getLogger("pano.storage_minio")
 
+
 class StorageMinio(Storage):
     def __init__(self) -> None:
         log.info("Configuring Minio Storage...")
         # Get env vars like this so that we crash if they're missing
-        minio_url        = os.environ["MINIO_URL"]
+        minio_url = os.environ["MINIO_URL"]
         minio_access_key = os.environ["MINIO_ACCESS_KEY"]
-        minio_secret_key = os.environ["MINIO_SECRET_KEY"] 
-        self.bucket      = os.environ["MINIO_BUCKET"]
-        minio_secure     = False if os.environ["MINIO_SECURE"] == "False" else True 
+        minio_secret_key = os.environ["MINIO_SECRET_KEY"]
+        self.bucket = os.environ["MINIO_BUCKET"]
+        minio_secure = False if os.environ["MINIO_SECURE"] == "False" else True
 
         # Create a client with the MinIO server playground, its access key
         # and secret key.
@@ -35,7 +36,9 @@ class StorageMinio(Storage):
     def upload_images(self, images: dict[str, str]) -> None:
         for path, file in images.items():
             self.client.fput_object(
-                self.bucket, path, file,
+                self.bucket,
+                path,
+                file,
             )
             log.info(f"Uploaded {file} to {path} in {self.bucket}")
 
@@ -47,12 +50,18 @@ class StorageMinio(Storage):
                 path = f"{WORKING_DIRECTORY}/minio/{title}"
                 self.client.fget_object(self.bucket, file, path)
                 images.append(path)
-        except Exception: # TODO: Better error handling?
+        except Exception:  # TODO: Better error handling?
             logging.exception("Could not download some images")
             return []
 
         return images
 
-
     def list_all_images(self) -> list[str]:
-        return self.client.list_objects()
+        return self.client.list_objects(self.bucket)
+
+    def get_next_object_name(self, install_number: int) -> str:
+        objects = self.client.list_objects(self.bucket, prefix=str(install_number))
+        if not objects:
+            return f"{install_number}/0"
+
+        last_object_number = objects[-1].strip("")
