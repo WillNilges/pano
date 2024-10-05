@@ -44,16 +44,18 @@ def main() -> None:
             return "No file part!", 400
 
         print(request.files)
-        file = request.files["files[]"]
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
-        if not file.filename:
-            flash("No selected file")
-            return redirect(request.url)
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(flask_app.config["UPLOAD_FOLDER"], filename))
-            return "Success"
+        #file = request.files["files[]"]
+        my_files = request.files.getlist("files[]")
+        for file in my_files:
+            # If the user does not select a file, the browser submits an
+            # empty file without a filename.
+            if not file.filename:
+                flash("No selected file")
+                return redirect(request.url)
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(flask_app.config["UPLOAD_FOLDER"], filename))
+        return "Success"
 
     @flask_app.route("/", methods=["GET", "POST"])
     def home():
