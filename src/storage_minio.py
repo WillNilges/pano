@@ -57,8 +57,15 @@ class StorageMinio(Storage):
 
         return images
 
-    def list_all_images(self) -> list[str]:
-        return self.client.list_objects(self.bucket)
+    def list_all_images(self, install_number: int | None = None) -> list[str]:
+        objects = []
+
+        prefix = str(install_number) if install_number else None
+
+        for o in self.client.list_objects(self.bucket, prefix=prefix):
+            objects.append(o)
+
+        return objects
 
     # FIXME: There _must_ be a library out there that will let you turn a number
     # into an excel column (27 = AA or whatever). Limitation with this is that

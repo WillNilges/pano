@@ -1,5 +1,6 @@
 import logging
 from pathlib import PurePosixPath
+import re
 import uuid
 from meshdb_client import MeshdbClient
 from settings import MINIO_URL
@@ -40,3 +41,13 @@ class Pano:
     # If you give me a file with the correct format, I'll take it at face
     # value and let you know if there's a pre-existing file. Else, I'll give it
     # the next letter in the sequence.
+
+    def validate_filenames(self, files) -> bool: 
+        p = re.compile("^(\\d)+([a-z])*.([a-z])*")
+        for f in files:
+            filename = f.filename
+            match = p.match(filename)
+            if match.span() != (0, len(filename)):
+                return False
+        return True
+

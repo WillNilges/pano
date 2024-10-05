@@ -34,6 +34,12 @@ def main() -> None:
             "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
         )
 
+    # Returns existing panoramas for a given install number
+    @flask_app.route("/existing", methods=["GET"])
+    def existing():
+        install_number = request.get_json()["install_number"]
+        return pano.minio.list_all_images(install_number=install_number)
+
     @flask_app.route("/upload", methods=["POST"])
     def upload():
         #print(request.headers["Install"])
@@ -52,8 +58,11 @@ def main() -> None:
             logging.exception("Bad Request! Install # wasn't an integer.")
             return "Install # wasn't an integer", 400
 
-        my_files = request.files.getlist("dropzone_files")
-        for file in my_files:
+        dropzone_files = request.files.getlist("dropzone_files")
+
+        pano.validate_filenames(dropzone_files)
+
+        for file in dropzone_files:
             # If the user does not select a file, the browser submits an
             # empty file without a filename.
             if not file.filename:
