@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class Storage(ABC):
     # Upload images to this storage interface.
     # Takes a dictionary where the key is the file path to upload to, and the
@@ -28,6 +29,6 @@ class Storage(ABC):
     # 1001: ["/path/to/a", "/path/to/b", ...],
     # 1002: ["/path/to/a", "/path/to/b", ...]
     # }
-    #@abstractmethod
-    #def get_inventory(self) -> dict[int, list[str]]:
+    # @abstractmethod
+    # def get_inventory(self) -> dict[int, list[str]]:
     #    pass
