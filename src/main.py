@@ -39,13 +39,13 @@ def main() -> None:
     def upload():
         print(request.files)
         # check if the post request has the file part
-        if "files[]" not in request.files:
+        if "dropzone-files" not in request.files:
             print("no file part!")
             return "No file part!", 400
 
         print(request.files)
         #file = request.files["files[]"]
-        my_files = request.files.getlist("files[]")
+        my_files = request.files.getlist("dropzone-files")
         for file in my_files:
             # If the user does not select a file, the browser submits an
             # empty file without a filename.
