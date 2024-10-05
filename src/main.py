@@ -38,21 +38,22 @@ def main() -> None:
     @flask_app.route("/upload", methods=["POST"])
     def upload():
         print(request.files)
-        if "files" not in request.files:
-            print("Files not found")
-            return "Please specify 'files' field in your body.", 400
+        # check if the post request has the file part
+        if "files[]" not in request.files:
+            print("no file part!")
+            return "No file part!", 400
 
-        for file in request.files["files"]:
-            # If the user does not select a file, the browser submits an
-            # empty file without a filename.
-            if not file.filename:
-                flash("No selected file")
-                return redirect(request.url)
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(flask_app.config["UPLOAD_FOLDER"], filename))
-
-        return "Success"
+        print(request.files)
+        file = request.files["files[]"]
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        if not file.filename:
+            flash("No selected file")
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(flask_app.config["UPLOAD_FOLDER"], filename))
+            return "Success"
 
     @flask_app.route("/", methods=["GET", "POST"])
     def home():
