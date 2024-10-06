@@ -5,7 +5,7 @@ import logging
 
 import pymeshdb
 from pano import Pano
-from settings import WORKING_DIRECTORY
+from settings import UPLOAD_DIRECTORY, WORKING_DIRECTORY
 from storage import Storage
 
 import os
@@ -26,7 +26,7 @@ def main() -> None:
 
     flask_app = Flask(__name__)
     CORS(flask_app)  # This will enable CORS for all routes
-    flask_app.config["UPLOAD_FOLDER"] = f"{WORKING_DIRECTORY}/upload"
+    flask_app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
     flask_app.config["MAX_CONTENT_LENGTH"] = 16 * 1000 * 1000
     flask_app.config["SECRET_KEY"] = "chomskz"
 
@@ -37,10 +37,10 @@ def main() -> None:
 
     # XXX (wdn): I think this is going to be dead code
     # Returns existing panoramas for a given install number
-    @flask_app.route("/api/v1/get-existing", methods=["GET"])
-    def existing():
-        install_number = request.get_json()["install_number"]
-        return pano.minio.list_all_images(install_number=install_number)
+    # @flask_app.route("/api/v1/get-existing", methods=["GET"])
+    # def existing():
+    #    install_number = request.get_json()["install_number"]
+    #    return pano.minio.list_all_images(install_number=install_number)
 
     @flask_app.route("/api/v1/upload", methods=["POST"])
     def upload():
@@ -64,7 +64,7 @@ def main() -> None:
 
         dropzone_files = request.files.getlist("dropzone_files")
 
-        pano.validate_filenames(dropzone_files)
+        # pano.validate_filenames(dropzone_files)
 
         for file in dropzone_files:
             # If the user does not select a file, the browser submits an
@@ -74,13 +74,20 @@ def main() -> None:
                 return "No filename?", 400
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                file_path = os.path.join(flask_app.config["UPLOAD_FOLDER"], filename)
+                try:
+                    os.makedirs(UPLOAD_DIRECTORY)
+                except:
+                    pass
+                file_path = os.path.join(UPLOAD_DIRECTORY, filename)
                 file.save(file_path)
                 try:
                     possible_duplicates = pano.handle_upload(
                         install_number, file_path, bypass_dupe_protection
                     )
                     if possible_duplicates:
+                        # Clean up working directory
+                        #shutil.rmtree(WORKING_DIRECTORY)
+                        #os.makedirs(WORKING_DIRECTORY)
                         return possible_duplicates, 409
                 except ValueError as e:
                     logging.exception(
@@ -92,8 +99,8 @@ def main() -> None:
                     return "There was a problem communicating with MeshDB.", 500
 
         # Clean up working directory
-        shutil.rmtree(WORKING_DIRECTORY)
-        os.makedirs(WORKING_DIRECTORY)
+        #shutil.rmtree(WORKING_DIRECTORY)
+        #os.makedirs(WORKING_DIRECTORY)
 
         return "", 201
 

@@ -44,10 +44,10 @@ class StorageMinio(Storage):
             )
             log.info(f"Uploaded {file} to {path} in {self.bucket}")
 
-    def download_images(self, images: list[str]) -> list[str]:
+    def download_images(self, objects: list[str]) -> list[str]:
         images = []
         try:
-            for object_name in images:
+            for object_name in objects:
                 title = object_name.split("/")[-1]
                 path = f"{WORKING_DIRECTORY}/minio/{title}"
                 self.client.fget_object(self.bucket, object_name, path)
@@ -64,7 +64,7 @@ class StorageMinio(Storage):
         prefix = str(install_number) if install_number else None
 
         for o in self.client.list_objects(self.bucket, prefix=prefix):
-            objects.append(o)
+            objects.append(o.object_name)
 
         return objects
 
