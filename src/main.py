@@ -110,6 +110,7 @@ def main() -> None:
         os.makedirs(WORKING_DIRECTORY)
 
         if possible_duplicates:
+            logging.warning(f"Possible Duplicates:\n{possible_duplicates}")
             return possible_duplicates, 409
 
         return "", 201

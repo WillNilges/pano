@@ -82,6 +82,7 @@ class Pano:
         # Else, we'll have to grab the signatures and compare them. Create a dictionary
         # of key: filename
         existing_file_signatures = {
+            # Sanitze the paths to avoid betraying internals 
             Image(filename=f).signature: PurePosixPath(f).name for f in existing_files
         }
 
@@ -92,7 +93,10 @@ class Pano:
             img = Image(filename=f)
             sig = img.signature
             if sig in existing_file_signatures:
-                possible_duplicates[f] = existing_file_signatures[img.signature]
-                logging.warning(f"Got possible duplicate. {possible_duplicates[f]} looks like {existing_file_signatures[img.signature]} (Signature matches: {sig})")
+                # Sanitze the paths to avoid betraying internals 
+                basename = PurePosixPath(f).name
+                possible_duplicates[basename] = existing_file_signatures[img.signature]
+
+                logging.warning(f"Got possible duplicate. {possible_duplicates[basename]} looks like {existing_file_signatures[img.signature]} (Signature matches: {sig})")
 
         return possible_duplicates
