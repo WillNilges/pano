@@ -11,6 +11,7 @@ dependencies = [
 	"dropbox==12.0.*",
 	"Flask==3.0.*",
 	"Flask-Cors==5.0.*",
+	"Wand==0.6.*",
 ]
 
 [project.optional-dependencies]
