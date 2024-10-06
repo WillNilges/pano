@@ -68,7 +68,7 @@ class StorageMinio(Storage):
 
         return objects
 
-    def get_next_object_letter(self, install_number: int) -> str:
+    def get_next_lexicograph(self, install_number: int) -> str:
         objects = self.client.list_objects(self.bucket, prefix=str(install_number))
 
         # If there are no objects for this install number yet, then return an empty
@@ -89,21 +89,6 @@ class StorageMinio(Storage):
             number_of_objects += 1
 
         return self.int_to_lexicograph(number_of_objects)
-
-    # XXX (willnilges): Probably dead code. Won't know until I settle on naming
-    # Thanks chatgpt
-    @staticmethod
-    def next_lexicograph(col):
-        col = col.lower()  # Handle lowercase inputs
-        col_list = list(col)
-        
-        for i in reversed(range(len(col_list))):
-            if col_list[i] != 'z':
-                col_list[i] = chr(ord(col_list[i]) + 1)
-                return ''.join(col_list)
-            col_list[i] = 'a'
-        
-        return 'a' * (len(col_list) + 1)  # Handles cases like 'z' -> 'aa'
 
     # Given a number, returns a lexicographical representation of that number
     # Example:
