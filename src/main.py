@@ -66,6 +66,11 @@ def main() -> None:
 
         # pano.validate_filenames(dropzone_files)
 
+        # We're gonna check each file for dupes. If we find a dupe, we keep track
+        # of it and bail back to the client, changing nothing except for temp storage
+        # until we get a confirmation.
+        possible_duplicates = {}
+
         for file in dropzone_files:
             # If the user does not select a file, the browser submits an
             # empty file without a filename.
@@ -86,14 +91,11 @@ def main() -> None:
 
                 # Try to upload it to S3 and save it in MeshDB
                 try:
-                    possible_duplicates = pano.handle_upload(
+                    possible_duplicates.update(pano.handle_upload(
                         install_number, file_path, bypass_dupe_protection
-                    )
+                    ))
                     if possible_duplicates:
-                        # Clean up working directory
-                        shutil.rmtree(WORKING_DIRECTORY)
-                        os.makedirs(WORKING_DIRECTORY)
-                        return possible_duplicates, 409
+                        continue
                 except ValueError as e:
                     logging.exception(
                         "Bad Request! Could not find a building associated with that Install #"
@@ -106,6 +108,9 @@ def main() -> None:
         # Clean up working directory
         shutil.rmtree(WORKING_DIRECTORY)
         os.makedirs(WORKING_DIRECTORY)
+
+        if possible_duplicates:
+            return possible_duplicates, 409
 
         return "", 201
 
