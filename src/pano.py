@@ -20,9 +20,12 @@ class Pano:
     ) -> dict[str, str] | None:
         # Firstly, check the images for possible duplicates.
         if not bypass_dupe_protection:
+            print(f"hello good morning :)")
             possible_duplicates = self.check_for_duplicates(install_number, [file_path])
             if possible_duplicates:
                 return possible_duplicates
+
+        print(f"Uhhhhh {bypass_dupe_protection}")
 
         building = self.meshdb.get_primary_building_for_install(install_number)
         # TODO: Distinguish between the server shitting and getting passed a bad install #
@@ -73,9 +76,13 @@ class Pano:
         self, install_number: int, uploaded_files: list[str]
     ) -> dict[str, str]:
         # First, download any images that might exist for this install number
-        existing_files = self.minio.download_images(
-            self.minio.list_all_images(install_number)
-        )
+        existing_images = self.minio.list_all_images(install_number)
+        existing_files = self.minio.download_images(existing_images)
+
+        print("existing_images")
+        print(existing_images)
+        print("existing_files")
+        print(existing_files)
 
         # If there are no existing files, we're done.
         if not existing_files:
@@ -87,11 +94,14 @@ class Pano:
             Image(filename=f).signature: PurePosixPath(f).name for f in existing_files
         }
 
+        print(existing_file_signatures)
+
         # Check if any of the images we received have a matching signature to an
         # existing image
         possible_duplicates = {}
         for f in uploaded_files:
             img = Image(filename=f)
+            print(img.signature)
             if img.signature in existing_file_signatures:
                 possible_duplicates[f] = existing_file_signatures[img.signature]
 
