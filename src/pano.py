@@ -20,12 +20,9 @@ class Pano:
     ) -> dict[str, str] | None:
         # Firstly, check the images for possible duplicates.
         if not bypass_dupe_protection:
-            print(f"hello good morning :)")
             possible_duplicates = self.check_for_duplicates(install_number, [file_path])
             if possible_duplicates:
                 return possible_duplicates
-
-        print(f"Uhhhhh {bypass_dupe_protection}")
 
         building = self.meshdb.get_primary_building_for_install(install_number)
         # TODO: Distinguish between the server shitting and getting passed a bad install #
@@ -88,15 +85,14 @@ class Pano:
             Image(filename=f).signature: PurePosixPath(f).name for f in existing_files
         }
 
-        print(existing_file_signatures)
-
         # Check if any of the images we received have a matching signature to an
         # existing image
         possible_duplicates = {}
         for f in uploaded_files:
             img = Image(filename=f)
-            print(img.signature)
-            if img.signature in existing_file_signatures:
+            sig = img.signature
+            if sig in existing_file_signatures:
                 possible_duplicates[f] = existing_file_signatures[img.signature]
+                logging.warning(f"Got possible duplicate. {possible_duplicates[f]} looks like {existing_file_signatures[img.signature]} (Signature matches: {sig})")
 
         return possible_duplicates
