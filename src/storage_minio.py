@@ -68,9 +68,6 @@ class StorageMinio(Storage):
 
         return objects
 
-    # FIXME: There _must_ be a library out there that will let you turn a number
-    # into an excel column (27 = AA or whatever). Limitation with this is that
-    # it only works up to 26.
     def get_next_object_letter(self, install_number: int) -> str:
         objects = self.client.list_objects(self.bucket, prefix=str(install_number))
 
@@ -91,7 +88,35 @@ class StorageMinio(Storage):
         for _ in objects:
             number_of_objects += 1
 
-        # 97 is 'a' in ASCII. Subtract one because at this point we know we already
-        # have the "no letter" case, so we gotta go over by 1
-        next_letter = chr(97 + number_of_objects - 1)
-        return next_letter
+        return self.int_to_lexicograph(number_of_objects)
+
+    # XXX (willnilges): Probably dead code. Won't know until I settle on naming
+    # Thanks chatgpt
+    @staticmethod
+    def next_lexicograph(col):
+        col = col.lower()  # Handle lowercase inputs
+        col_list = list(col)
+        
+        for i in reversed(range(len(col_list))):
+            if col_list[i] != 'z':
+                col_list[i] = chr(ord(col_list[i]) + 1)
+                return ''.join(col_list)
+            col_list[i] = 'a'
+        
+        return 'a' * (len(col_list) + 1)  # Handles cases like 'z' -> 'aa'
+
+    # Given a number, returns a lexicographical representation of that number
+    # Example:
+    # 0  -> 
+    # 1  -> a
+    # 26 -> z
+    # 27 -> aa
+    # Thanks chatgpt
+    @staticmethod
+    def int_to_lexicograph(n):
+        result = []
+        while n > 0:
+            n -= 1  # Adjust because Excel columns are 1-indexed
+            result.append(chr(n % 26 + ord('a')))
+            n //= 26
+        return ''.join(reversed(result))
