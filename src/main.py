@@ -73,21 +73,26 @@ def main() -> None:
                 logging.error("No filename?")
                 return "No filename?", 400
             if file and allowed_file(file.filename):
+                # Sanitize input
                 filename = secure_filename(file.filename)
+                # Ensure that the upload directory exists
                 try:
                     os.makedirs(UPLOAD_DIRECTORY)
                 except:
                     pass
+                # Save the file to local storage
                 file_path = os.path.join(UPLOAD_DIRECTORY, filename)
                 file.save(file_path)
+
+                # Try to upload it to S3 and save it in MeshDB
                 try:
                     possible_duplicates = pano.handle_upload(
                         install_number, file_path, bypass_dupe_protection
                     )
                     if possible_duplicates:
                         # Clean up working directory
-                        #shutil.rmtree(WORKING_DIRECTORY)
-                        #os.makedirs(WORKING_DIRECTORY)
+                        shutil.rmtree(WORKING_DIRECTORY)
+                        os.makedirs(WORKING_DIRECTORY)
                         return possible_duplicates, 409
                 except ValueError as e:
                     logging.exception(
@@ -99,8 +104,8 @@ def main() -> None:
                     return "There was a problem communicating with MeshDB.", 500
 
         # Clean up working directory
-        #shutil.rmtree(WORKING_DIRECTORY)
-        #os.makedirs(WORKING_DIRECTORY)
+        shutil.rmtree(WORKING_DIRECTORY)
+        os.makedirs(WORKING_DIRECTORY)
 
         return "", 201
 
