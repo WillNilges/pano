@@ -76,13 +76,7 @@ class Pano:
         self, install_number: int, uploaded_files: list[str]
     ) -> dict[str, str]:
         # First, download any images that might exist for this install number
-        existing_images = self.minio.list_all_images(install_number)
-        existing_files = self.minio.download_images(existing_images)
-
-        print("existing_images")
-        print(existing_images)
-        print("existing_files")
-        print(existing_files)
+        existing_files = self.minio.download_images(self.minio.list_all_images(install_number))
 
         # If there are no existing files, we're done.
         if not existing_files:
