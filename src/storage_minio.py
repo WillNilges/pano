@@ -3,7 +3,7 @@ import os
 from pathlib import PurePosixPath
 from minio import Minio
 
-from settings import MINIO_BUCKET, MINIO_URL
+from settings import MINIO_BUCKET, MINIO_URL, WORKING_DIRECTORY
 from storage import Storage
 
 log = logging.getLogger("pano.storage_minio")
@@ -47,10 +47,10 @@ class StorageMinio(Storage):
     def download_images(self, images: list[str]) -> list[str]:
         images = []
         try:
-            for file in images:
-                title = file.split("/")[-1]
+            for object_name in images:
+                title = object_name.split("/")[-1]
                 path = f"{WORKING_DIRECTORY}/minio/{title}"
-                self.client.fget_object(self.bucket, file, path)
+                self.client.fget_object(self.bucket, object_name, path)
                 images.append(path)
         except Exception:  # TODO: Better error handling?
             logging.exception("Could not download some images")
@@ -92,7 +92,7 @@ class StorageMinio(Storage):
 
     # Given a number, returns a lexicographical representation of that number
     # Example:
-    # 0  -> 
+    # 0  ->
     # 1  -> a
     # 26 -> z
     # 27 -> aa
@@ -102,6 +102,6 @@ class StorageMinio(Storage):
         result = []
         while n > 0:
             n -= 1  # Adjust because Excel columns are 1-indexed
-            result.append(chr(n % 26 + ord('a')))
+            result.append(chr(n % 26 + ord("a")))
             n //= 26
-        return ''.join(reversed(result))
+        return "".join(reversed(result))
