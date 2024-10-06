@@ -5,13 +5,14 @@ import logging
 
 import pymeshdb
 from pano import Pano
+from settings import WORKING_DIRECTORY
 from storage import Storage
 
 import os
+import shutil
 from flask import Flask, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 
-UPLOAD_FOLDER = "/tmp/pano/upload"
 ALLOWED_EXTENSIONS = {"txt", "pdf", "png", "jpg", "jpeg", "gif"}
 
 logging.basicConfig(
@@ -25,7 +26,7 @@ def main() -> None:
 
     flask_app = Flask(__name__)
     CORS(flask_app)  # This will enable CORS for all routes
-    flask_app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+    flask_app.config["UPLOAD_FOLDER"] = f"{WORKING_DIRECTORY}/upload"
     flask_app.config["MAX_CONTENT_LENGTH"] = 16 * 1000 * 1000
     flask_app.config["SECRET_KEY"] = "chomskz"
 
@@ -34,19 +35,22 @@ def main() -> None:
             "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
         )
 
+    # XXX (wdn): I think this is going to be dead code
     # Returns existing panoramas for a given install number
-    @flask_app.route("/existing", methods=["GET"])
+    @flask_app.route("/api/v1/get-existing", methods=["GET"])
     def existing():
         install_number = request.get_json()["install_number"]
         return pano.minio.list_all_images(install_number=install_number)
 
-    @flask_app.route("/upload", methods=["POST"])
+    @flask_app.route("/api/v1/upload", methods=["POST"])
     def upload():
         # print(request.headers["Install"])
         # print(request.files)
 
         if "Install" not in request.headers:
             logging.error("Bad Request! Missing Install # from header.")
+
+        bypass_dupe_protection = "Duplicates" in request.headers
         # check if the post request has the file part
         if "dropzone_files" not in request.files:
             logging.error("Bad Request! Found no files.")
@@ -73,7 +77,11 @@ def main() -> None:
                 file_path = os.path.join(flask_app.config["UPLOAD_FOLDER"], filename)
                 file.save(file_path)
                 try:
-                    pano.handle_upload(install_number, file_path)
+                    possible_duplicates = pano.handle_upload(
+                        install_number, file_path, bypass_dupe_protection
+                    )
+                    if possible_duplicates:
+                        return possible_duplicates, 409
                 except ValueError as e:
                     logging.exception(
                         "Bad Request! Could not find a building associated with that Install #"
@@ -82,7 +90,12 @@ def main() -> None:
                 except pymeshdb.exceptions.BadRequestException:
                     logging.exception("Problem communicating with MeshDB.")
                     return "There was a problem communicating with MeshDB.", 500
-        return ""
+
+        # Clean up working directory
+        shutil.rmtree(WORKING_DIRECTORY)
+        os.makedirs(WORKING_DIRECTORY)
+
+        return "", 201
 
     @flask_app.route("/", methods=["GET", "POST"])
     def home():

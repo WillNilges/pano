@@ -7,6 +7,7 @@ from settings import MINIO_URL
 from storage_minio import StorageMinio
 from wand.image import Image
 
+
 class Pano:
     def __init__(self) -> None:
         self.meshdb = MeshdbClient()
@@ -14,11 +15,15 @@ class Pano:
 
     # Mocking some kind of upload portal with an array of strings
     # TODO: What about NNs? What about normal install photos?
-    def handle_upload(self, install_number: int, file_path: str) -> None:
-        # Firstly, check the images for possible duplicates. 
-        possible_duplicates = self.check_for_duplicates(install_number, [file_path])
+    def handle_upload(
+        self, install_number: int, file_path: str, bypass_dupe_protection: bool = False
+    ) -> dict[str, str] | None:
+        # Firstly, check the images for possible duplicates.
+        if not bypass_dupe_protection:
+            possible_duplicates = self.check_for_duplicates(install_number, [file_path])
+            if possible_duplicates:
+                return possible_duplicates
 
-        
         building = self.meshdb.get_primary_building_for_install(install_number)
         # TODO: Distinguish between the server shitting and getting passed a bad install #
         if not building:
@@ -48,7 +53,7 @@ class Pano:
 
     # Check that a filename already has the correct format.
     # TODO (willnilges) If it does, and does not collide with existing images,
-    # then we'll take it at face value and not change it. 
+    # then we'll take it at face value and not change it.
     def validate_filenames(self, files) -> bool:
         p = re.compile("^(\\d)+([a-z])*.([a-z])*")
         for f in files:
@@ -64,23 +69,30 @@ class Pano:
 
     # This is probably going to be really expensive, so best to limit its use.
     # XXX (wdn): Perhaps we should somehow cache the signatures of our files?
-    def check_for_duplicates(self, install_number: int, uploaded_files: list[str]) -> list[str]:
+    def check_for_duplicates(
+        self, install_number: int, uploaded_files: list[str]
+    ) -> dict[str, str]:
         # First, download any images that might exist for this install number
-        existing_files = self.minio.download_images(self.minio.list_all_images(install_number))
+        existing_files = self.minio.download_images(
+            self.minio.list_all_images(install_number)
+        )
 
-        # If there are none, we're done.
+        # If there are no existing files, we're done.
         if not existing_files:
-            return []
+            return {}
 
-        # Else, we'll have to grab the signatures and compare them.
-        existing_file_signatures = [Image(filename=f).signature for f in existing_files]
+        # Else, we'll have to grab the signatures and compare them. Create a dictionary
+        # of key: filename
+        existing_file_signatures = {
+            Image(filename=f).signature: PurePosixPath(f).name for f in existing_files
+        }
 
-        # If the signature of an uploaded image matches that of an image we already
-        # have, add it to the list we're returning
-        possible_duplicates = []
+        # Check if any of the images we received have a matching signature to an
+        # existing image
+        possible_duplicates = {}
         for f in uploaded_files:
             img = Image(filename=f)
             if img.signature in existing_file_signatures:
-                possible_duplicates.append(f)
+                possible_duplicates[f] = existing_file_signatures[img.signature]
 
         return possible_duplicates
