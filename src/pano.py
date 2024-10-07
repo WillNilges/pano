@@ -101,6 +101,6 @@ class Pano:
 
                 possible_duplicates[basename] = url 
 
-                logging.warning(f"Got possible duplicate. {possible_duplicates[basename]} looks like {existing_file_signatures[img.signature]} (Signature matches: {sig})")
+                logging.warning(f"Got possible duplicate. Uploaded file {basename} looks like existing file {existing_file_signatures[img.signature]} (Signature matches: {sig})")
 
         return possible_duplicates
