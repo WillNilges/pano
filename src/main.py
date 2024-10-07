@@ -35,13 +35,6 @@ def main() -> None:
             "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
         )
 
-    # XXX (wdn): I think this is going to be dead code
-    # Returns existing panoramas for a given install number
-    # @flask_app.route("/api/v1/get-existing", methods=["GET"])
-    # def existing():
-    #    install_number = request.get_json()["install_number"]
-    #    return pano.minio.list_all_images(install_number=install_number)
-
     @flask_app.route("/api/v1/upload", methods=["POST"])
     def upload():
         if "installNumber" not in request.values:
