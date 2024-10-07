@@ -95,7 +95,11 @@ class Pano:
             if sig in existing_file_signatures:
                 # Sanitze the paths to avoid betraying internals 
                 basename = PurePosixPath(f).name
-                possible_duplicates[basename] = existing_file_signatures[img.signature]
+
+                # Get a link to the S3 object to share with the client
+                url = self.minio.client.presigned_get_object(self.minio.bucket, existing_file_signatures[img.signature])
+
+                possible_duplicates[basename] = url 
 
                 logging.warning(f"Got possible duplicate. {possible_duplicates[basename]} looks like {existing_file_signatures[img.signature]} (Signature matches: {sig})")
 
