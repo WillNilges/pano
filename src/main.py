@@ -44,25 +44,22 @@ def main() -> None:
 
     @flask_app.route("/api/v1/upload", methods=["POST"])
     def upload():
-        # print(request.headers["Install"])
-        # print(request.files)
-
-        if "Install" not in request.headers:
+        if "installNumber" not in request.values:
             logging.error("Bad Request! Missing Install # from header.")
 
-        bypass_dupe_protection = "Duplicates" in request.headers
+        bypass_dupe_protection = "trustMeBro" in request.values and request.values["trustMeBro"] == "true"
         # check if the post request has the file part
-        if "dropzone_files" not in request.files:
+        if "dropzoneImages[]" not in request.files:
             logging.error("Bad Request! Found no files.")
             return "Found no files. Maybe the request is malformed?", 400
 
         try:
-            install_number = int(request.headers["Install"])
+            install_number = int(request.values["installNumber"])
         except ValueError:
             logging.exception("Bad Request! Install # wasn't an integer.")
             return "Install # wasn't an integer", 400
 
-        dropzone_files = request.files.getlist("dropzone_files")
+        dropzone_files = request.files.getlist("dropzoneImages[]")
 
         # pano.validate_filenames(dropzone_files)
 
@@ -91,10 +88,13 @@ def main() -> None:
 
                 # Try to upload it to S3 and save it in MeshDB
                 try:
-                    possible_duplicates.update(pano.handle_upload(
+                    d = pano.handle_upload(
                         install_number, file_path, bypass_dupe_protection
-                    ))
-                    if possible_duplicates:
+                    )
+
+                    # If duplicates were found from that upload, then don't do anything else and keep chekcing for more.
+                    if d:
+                        possible_duplicates.update(d)
                         continue
                 except ValueError as e:
                     logging.exception(
@@ -110,7 +110,6 @@ def main() -> None:
         os.makedirs(WORKING_DIRECTORY)
 
         if possible_duplicates:
-            logging.warning(f"Possible Duplicates:\n{possible_duplicates}")
             return possible_duplicates, 409
 
         return "", 201
