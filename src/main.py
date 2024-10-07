@@ -47,7 +47,9 @@ def main() -> None:
         if "installNumber" not in request.values:
             logging.error("Bad Request! Missing Install # from header.")
 
-        bypass_dupe_protection = "trustMeBro" in request.values and request.values["trustMeBro"] == "true"
+        bypass_dupe_protection = (
+            "trustMeBro" in request.values and request.values["trustMeBro"] == "true"
+        )
         # check if the post request has the file part
         if "dropzoneImages[]" not in request.files:
             logging.error("Bad Request! Found no files.")

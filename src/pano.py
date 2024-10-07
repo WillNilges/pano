@@ -73,7 +73,9 @@ class Pano:
         self, install_number: int, uploaded_files: list[str]
     ) -> dict[str, str]:
         # First, download any images that might exist for this install number
-        existing_files = self.minio.download_images(self.minio.list_all_images(install_number))
+        existing_files = self.minio.download_images(
+            self.minio.list_all_images(install_number)
+        )
 
         # If there are no existing files, we're done.
         if not existing_files:
@@ -82,8 +84,9 @@ class Pano:
         # Else, we'll have to grab the signatures and compare them. Create a dictionary
         # of key: filename
         existing_file_signatures = {
-            # Sanitze the paths to avoid betraying internals 
-            Image(filename=f).signature: PurePosixPath(f).name for f in existing_files
+            # Sanitze the paths to avoid betraying internals
+            Image(filename=f).signature: PurePosixPath(f).name
+            for f in existing_files
         }
 
         # Check if any of the images we received have a matching signature to an
@@ -93,14 +96,18 @@ class Pano:
             img = Image(filename=f)
             sig = img.signature
             if sig in existing_file_signatures:
-                # Sanitze the paths to avoid betraying internals 
+                # Sanitze the paths to avoid betraying internals
                 basename = PurePosixPath(f).name
 
                 # Get a link to the S3 object to share with the client
-                url = self.minio.client.presigned_get_object(self.minio.bucket, existing_file_signatures[img.signature])
+                url = self.minio.client.presigned_get_object(
+                    self.minio.bucket, existing_file_signatures[img.signature]
+                )
 
-                possible_duplicates[basename] = url 
+                possible_duplicates[basename] = url
 
-                logging.warning(f"Got possible duplicate. Uploaded file {basename} looks like existing file {existing_file_signatures[img.signature]} (Signature matches: {sig})")
+                logging.warning(
+                    f"Got possible duplicate. Uploaded file {basename} looks like existing file {existing_file_signatures[img.signature]} (Signature matches: {sig})"
+                )
 
         return possible_duplicates
