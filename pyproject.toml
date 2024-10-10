@@ -16,6 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black == 23.7.*",
-    "isort == 5.12.*",
+    "black==23.7.*",
+    "isort==5.12.*",
+    "pytest==8.3.*",
 ]
