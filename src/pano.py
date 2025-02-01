@@ -6,9 +6,11 @@ import uuid
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from db import PanoDB
 from meshdb_client import MeshdbClient
 from models.base import Base
-from settings import MINIO_URL
+from models.image import ImageCategory
+from settings import MINIO_BUCKET, MINIO_URL
 from storage_minio import StorageMinio
 from wand.image import Image
 
@@ -17,8 +19,7 @@ class Pano:
     def __init__(self) -> None:
         self.meshdb = MeshdbClient()
         self.minio = StorageMinio()
-        self.engine = create_engine(os.environ['PG_CONN'], echo=True)
-        Base.metadata.create_all(self.engine)
+        self.db = PanoDB()
 
     # Mocking some kind of upload portal with an array of strings
     def handle_upload(
@@ -31,31 +32,26 @@ class Pano:
                 return possible_duplicates
 
         building = self.meshdb.get_primary_building_for_install(install_number)
-        # TODO: Distinguish between the server shitting and getting passed a bad install #
+        # TODO: Distinguish between the server erroring, and getting passed a bad install #
         if not building:
             raise ValueError("Could not find a building associated with that Install #")
 
+        # Create a DB object
+        image_object = self.db.create_image(install_number, ImageCategory.panoramas)
+
         # Upload object to S3
-        suffix = PurePosixPath(file_path).suffix
-        letter = self.minio.get_next_lexicograph(install_number)
-        object_name = f"{install_number}{letter}{suffix}"
-        self.minio.upload_images({object_name: file_path})
+        self.minio.upload_images({image_object.s3_object_path(): file_path})
 
         # Save link to object in MeshDB
         # TODO: Perhaps it would be better to completely re-build the panorama
         # list for that particular building each time we save? Edge case on that:
         # we don't want to blow away panoramas from other installs.
-        url = f"http://{MINIO_URL}/{object_name}"
+        url = f"http://{MINIO_URL}/{MINIO_BUCKET}/{image_object.s3_object_path()}"
         logging.info(url)
         self.meshdb.save_panorama_on_building(building.id, url)
 
     # TODO: Could we have a route to check the file names and see if there are
     # dupes?
-
-    # Maybe we enforce a naming scheme with a regex.
-    # If you give me a file with the correct format, I'll take it at face
-    # value and let you know if there's a pre-existing file. Else, I'll give it
-    # the next letter in the sequence.
 
     # Check that a filename already has the correct format.
     # TODO (willnilges) If it does, and does not collide with existing images,

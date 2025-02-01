@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 import uuid
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from models.base import Base
@@ -13,7 +13,7 @@ class PanoDB:
         self.engine = create_engine(os.environ['PG_CONN'], echo=True)
         Base.metadata.create_all(self.engine)
 
-    def create_image(self, install_number: int, category: ImageCategory) -> uuid.UUID:
+    def create_image(self, install_number: int, category: ImageCategory) -> Image:
         # TODO: Figure out order
         # DO I want to order per category or overall? Probably both?
 
@@ -21,22 +21,30 @@ class PanoDB:
 
         image_uuid = uuid.uuid4()
 
-        with Session(self.engine) as session:
+        with Session(self.engine, expire_on_commit=False) as session:
+            # Get last ordered image
+            next_order = 0
+            statement = select(Image).filter_by(install_number=install_number).order_by(Image.order.desc())
+            row = session.execute(statement).first()
+            if row:
+                next_order = row[0].order + 1
+
             i = Image(
                 id=image_uuid,
                 timestamp=datetime.now(),
                 install_number=install_number,
-                order=0, # TODO: Figure out order lol. I think a new Model might be warranted
+                order=next_order,
                 category=category,
             )
             session.add_all([i])
             session.commit()
-
-        return image_uuid
+            return i
 
     def delete_image(self, id: uuid.UUID): 
         with Session(self.engine) as session:
-            i = 
+            result = session.query(Image).filter(Image.id == id).first()
+            session.delete(result)
+            session.commit()
 
     def get_images(self, install_number):
         with Session(self.engine) as session: 
