@@ -27,3 +27,7 @@ I wonder if I can make meshdb use a configurable pano URL.... hmmmm. Probably to
 ---
 
 Maybe I should focus on the panorama upload to MinIO first, then we can worry about dropbox when we have wifi
+
+---
+
+Dustin wants a database. I think that's the best way to go as well. Just shove everything in an S3 bucket, encode date and install information in the path, fine, but rely wholly on the database for everything else. 

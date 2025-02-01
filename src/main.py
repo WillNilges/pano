@@ -1,9 +1,14 @@
+from datetime import datetime
+import uuid
 from flask import Flask, request
 from flask_cors import CORS
 from minio.error import S3Error
 import logging
 
 import pymeshdb
+from sqlalchemy.orm import Session
+from meshdb_client import MeshdbClient
+from models.image import Image, ImageCategory
 from pano import Pano
 from settings import UPLOAD_DIRECTORY, WORKING_DIRECTORY
 from storage import Storage
@@ -13,7 +18,7 @@ import shutil
 from flask import Flask, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 
-ALLOWED_EXTENSIONS = {"txt", "pdf", "png", "jpg", "jpeg", "gif"}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -34,6 +39,26 @@ def main() -> None:
         return (
             "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
         )
+
+    @flask_app.route("/test_create_thingie")
+    def test_create_thingie():
+        with Session(pano.engine) as session:
+            i = Image(
+                id=uuid.uuid4(),
+                timestamp=datetime.now(),
+                install_number=1,
+                order=1,
+                category=ImageCategory.panoramas,
+            )
+            session.add_all([i])
+            session.commit()
+        return ""
+
+    @flask_app.route("/api/v1/install/<install_number>")
+    def get_images_for_install_number(install_number: int):
+        images = pano.minio.list_all_images(install_number=install_number)
+        s3_urls = list(f"{os.environ['MINIO_URL']}/{os.environ['MINIO_BUCKET']}/{i}" for i in images)
+        return s3_urls
 
     @flask_app.route("/api/v1/upload", methods=["POST"])
     def upload():
@@ -87,7 +112,8 @@ def main() -> None:
                         install_number, file_path, bypass_dupe_protection
                     )
 
-                    # If duplicates were found from that upload, then don't do anything else and keep chekcing for more.
+                    # If duplicates were found from that upload, then don't do
+                    # anything else and keep chekcing for more.
                     if d:
                         possible_duplicates.update(d)
                         continue

@@ -17,34 +17,6 @@ class MeshdbClient:
             api_key_prefix={"tokenAuth": "Token"},
         )
 
-    # Naively gets all installs, one page at a time.
-    # There's gotta be a faster way. It would be dumb, but maybe we could
-    # parallelize them.
-    def get_all_installs(self) -> list[Install]:
-        installs = []
-        # Enter a context with an instance of the API client
-        with pymeshdb.ApiClient(self.config) as api_client:
-            # Create an instance of the API class
-            api_instance = pymeshdb.InstallsApi(api_client)
-
-            try:
-                another_page = True
-                page = 1  # A page number within the paginated result set. Starts at 1 for some reason.
-                while another_page:
-                    log.info(f"Getting page {page}...")
-                    api_response = api_instance.api_v1_installs_list(page=page)
-                    installs.append(api_response.results)
-                    if api_response.next:
-                        page += 1
-                    else:
-                        another_page = False
-            except Exception:
-                log.exception(
-                    "Exception when calling InstallsApi->api_v1_installs_list."
-                )
-
-        return installs
-
     def get_primary_building_for_install(self, install_number: int) -> Building | None:
         with pymeshdb.ApiClient(self.config) as api_client:
             building_api = pymeshdb.BuildingsApi(api_client)
