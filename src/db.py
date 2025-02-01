@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 import os
 import uuid
 from sqlalchemy import create_engine, select
@@ -46,14 +47,11 @@ class PanoDB:
             session.delete(result)
             session.commit()
 
-    def get_images(self, install_number):
-        with Session(self.engine) as session: 
-            """
-            q = session.query(Image, Image.id, user_alias)
-
-            # this expression:
-            chom = q.column_descriptions
-            """
-
-            result = session.query(Image).filter(Image.install_number == install_number).all()
-            return result
+    def get_image(self, id: uuid.UUID) -> Image | None:
+        with Session(self.engine, expire_on_commit=False) as session:
+            statement = select(Image).filter_by(id=id)
+            row = session.execute(statement).first()
+            if row:
+                return row[0]
+            logging.warning(f"Could not find image with id {id}")
+            return None

@@ -78,7 +78,6 @@ class Pano:
         existing_files = self.minio.download_images(
             self.minio.list_all_images(install_number)
         )
-
         # If there are no existing files, we're done.
         if not existing_files:
             return {}
@@ -98,12 +97,19 @@ class Pano:
             img = Image(filename=f)
             sig = img.signature
             if sig in existing_file_signatures:
-                # Sanitze the paths to avoid betraying internals
+                # Sanitze the paths to avoid betraying internals. This should
+                # always be a UUID
                 basename = PurePosixPath(f).name
+
+                image = self.db.get_image(existing_file_signatures[img.signature])
+                if not image:
+                    raise FileNotFoundError(f"Could not locate image in the database. {basename}")
+
+                image_path = image.s3_object_path()
 
                 # Get a link to the S3 object to share with the client
                 url = self.minio.client.presigned_get_object(
-                    self.minio.bucket, existing_file_signatures[img.signature]
+                    self.minio.bucket, image_path
                 )
 
                 possible_duplicates[basename] = url
