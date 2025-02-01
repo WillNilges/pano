@@ -1,8 +1,13 @@
 import logging
+import os
 from pathlib import PurePosixPath
 import re
 import uuid
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 from meshdb_client import MeshdbClient
+from models.base import Base
 from settings import MINIO_URL
 from storage_minio import StorageMinio
 from wand.image import Image
@@ -12,9 +17,10 @@ class Pano:
     def __init__(self) -> None:
         self.meshdb = MeshdbClient()
         self.minio = StorageMinio()
+        self.engine = create_engine(os.environ['PG_CONN'], echo=True)
+        Base.metadata.create_all(self.engine)
 
     # Mocking some kind of upload portal with an array of strings
-    # TODO: What about NNs? What about normal install photos?
     def handle_upload(
         self, install_number: int, file_path: str, bypass_dupe_protection: bool = False
     ) -> dict[str, str] | None:

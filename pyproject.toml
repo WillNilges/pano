@@ -12,6 +12,8 @@ dependencies = [
 	"Flask==3.0.*",
 	"Flask-Cors==5.0.*",
 	"Wand==0.6.*",
+	"SQLAlchemy==2.0.*",
+	"psycopg[binary,pool]==3.2.*",
 ]
 
 [project.optional-dependencies]
