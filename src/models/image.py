@@ -22,5 +22,5 @@ class Image(Base):
     order: Mapped[int] = mapped_column()
     category: Mapped[ImageCategory] = mapped_column()
 
-    def s3_path(self):
+    def s3_object_path(self):
         return f"{self.install_number}/{self.id}"
