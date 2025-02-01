@@ -58,10 +58,10 @@ class StorageMinio(Storage):
 
         return images
 
-    def list_all_images(self, install_number: int | None = None) -> list[str]:
+    def list_all_images(self, install_number: int) -> list[str]:
         objects = []
 
-        prefix = str(install_number) if install_number else None
+        prefix = f"{install_number}/"
 
         for o in self.client.list_objects(self.bucket, prefix=prefix):
             objects.append(o.object_name)
