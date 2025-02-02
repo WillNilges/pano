@@ -1,4 +1,3 @@
-from datetime import datetime
 import logging
 import os
 import uuid
@@ -6,31 +5,13 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from models.base import Base
-from models.image import Image, ImageCategory
+from models.image import Image 
 
 
 class PanoDB:
     def __init__(self) -> None:
         self.engine = create_engine(os.environ["PG_CONN"], echo=False)
         Base.metadata.create_all(self.engine)
-
-    def save_image(self, image: Image) -> Image:
-        with Session(self.engine, expire_on_commit=False) as session:
-            # Get last ordered image, or set this one to 0
-            statement = (
-                select(Image)
-                .filter_by(install_number=image.install_number)
-                .order_by(Image.order.desc())
-            )
-            row = session.execute(statement).first()
-            if row:
-                image.order = row[0].order + 1
-            else:
-                image.order = 0
-
-            session.add(image)
-            session.commit()
-            return image
 
     def delete_image(self, id: uuid.UUID):
         with Session(self.engine) as session:

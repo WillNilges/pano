@@ -2,18 +2,19 @@ from dataclasses import dataclass
 from datetime import datetime
 import uuid
 import enum
-from sqlalchemy import DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import DateTime, select
+from sqlalchemy.orm import Mapped, Session, mapped_column
 from models.base import Base
 from settings import MINIO_BUCKET, MINIO_URL
+from storage_minio import StorageMinio
 
 
 # Or should I have tags?
 class ImageCategory(enum.Enum):
-    panorama = 1
-    equipment = 2
-    detail = 3
-    misc = 4
+    panorama = "PANORAMA"
+    equipment = "EQUIPMENT"
+    detail = "DETAIL"
+    misc = "MISC"
 
     def __html__(self):
         return self._name_
@@ -23,24 +24,38 @@ class ImageCategory(enum.Enum):
 class Image(Base):
     __tablename__ = "image"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4())
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     install_number: Mapped[int] = mapped_column()
     order: Mapped[int] = mapped_column()
     category: Mapped[ImageCategory] = mapped_column()
+    #signature: Mapped[str] = mapped_column() # The hash of the image
 
-    def __init__(self, install_number: int, category: ImageCategory):
+    def __init__(self, session: Session, install_number: int, category: ImageCategory):
+        self.id = uuid.uuid4()
+        self.timestamp = datetime.now()
         self.install_number = install_number
         self.category = category
         self.order = -1
 
+        # Fetch the last order for this install_number and increment
+        max_order = session.execute(
+            select(Image.order)
+            .where(Image.install_number == install_number)
+            .order_by(Image.order.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+
+        if max_order:
+            self.order = max_order
+
         super().__init__()
 
-    def s3_object_path(self):
-        return f"{self.install_number}/{self.id}"
+    def get_object_path(self):
+        return StorageMinio.get_object_path(self.install_number, self.id) 
 
     def url(self):
-        return f"{MINIO_URL}/{MINIO_BUCKET}/{self.s3_object_path()}"
+        return f"{'https://' if MINIO_SECURE else 'http://'}{MINIO_URL}/{MINIO_BUCKET}/{self.get_object_path()}"
 
     # def __repr__(self) -> str:
     #    return f"Image(id={self.id}, timestamp={self.timestamp}, install_number={self.install_number}, order={self.order}, category={self.category})"

@@ -1,23 +1,37 @@
+import dataclasses
 import logging
+import os
 from pathlib import PurePosixPath
 import re
+import uuid
 
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from db import PanoDB
 from meshdb_client import MeshdbClient
+from models.base import Base
 from models.image import Image, ImageCategory
-from settings import MINIO_BUCKET, MINIO_URL
+from storage import Storage
 from storage_minio import StorageMinio
-from wand.image import WandImage
 
 
 # I need to find a way to improve the abstraction of the database
 class Pano:
     def __init__(self) -> None:
-        self.meshdb = MeshdbClient()
-        self.minio = StorageMinio()
-        self.db = PanoDB()
+        self.meshdb: MeshdbClient = MeshdbClient()
+        self.storage: Storage = StorageMinio()
+        self.db: PanoDB = PanoDB()
+
+    def get_images(self, install_number: int) -> list[dict]:
+        images = self.db.get_images(install_number=install_number)
+        serialized_images = []
+        for img in images:
+            i = dataclasses.asdict(img)
+            i["url"] = img.url()
+            serialized_images.append(i)
+
+        return serialized_images
 
     # Mocking some kind of upload portal with an array of strings
     def handle_upload(
@@ -25,7 +39,7 @@ class Pano:
     ) -> dict[str, str] | None:
         # Firstly, check the images for possible duplicates.
         if not bypass_dupe_protection:
-            possible_duplicates = self.check_for_duplicates(install_number, [file_path])
+            possible_duplicates = self.storage.check_for_duplicates(install_number, [file_path])
             if possible_duplicates:
                 return possible_duplicates
 
@@ -34,75 +48,25 @@ class Pano:
         if not building:
             raise ValueError("Could not find a building associated with that Install #")
 
-        # Create a DB object
-        image_object = Image(
-            install_number=install_number, category=ImageCategory.panorama
-        )
+        with Session(self.db.engine, expire_on_commit=False) as session:
+            # Create a DB object
+            image_object = Image(
+                session=session,
+                install_number=install_number,
+                category=ImageCategory.panorama,
+            )
 
-        # Upload object to S3
-        self.minio.upload_images({image_object.s3_object_path(): file_path})
+            # Upload object to S3
+            self.storage.upload_objects({image_object.get_object_path(): file_path})
 
-        # If successful, save image to db
-        image_object = self.db.save_image(image_object)
+            # If successful, save image object to DB
+            session.add(image_object)
+            session.commit()
 
-        # Save link to object in MeshDB
-        url = image_object.url()
-        logging.info(url)
-        self.meshdb.save_panorama_on_building(building.id, url)
-
-    # Uses ImageMagick to check the hash of the files uploaded against photos
-    # that already exist under an install. If a photo matches, the path is returned
-    # in the list.
-
-    # This is probably going to be really expensive, so best to limit its use.
-    # XXX (wdn): Perhaps we should somehow cache the signatures of our files?
-    def check_for_duplicates(
-        self, install_number: int, uploaded_files: list[str]
-    ) -> dict[str, str]:
-        # First, download any images that might exist for this install number
-        existing_files = self.minio.download_images(
-            self.minio.list_all_images(install_number)
-        )
-        # If there are no existing files, we're done.
-        if not existing_files:
-            return {}
-
-        # Else, we'll have to grab the signatures and compare them. Create a dictionary
-        # of key: filename
-        existing_file_signatures = {
-            # Sanitze the paths to avoid betraying internals
-            WandImage(filename=f).signature: PurePosixPath(f).name
-            for f in existing_files
-        }
-
-        # Check if any of the images we received have a matching signature to an
-        # existing image
-        possible_duplicates = {}
-        for f in uploaded_files:
-            img = WandImage(filename=f)
-            sig = img.signature
-            if sig in existing_file_signatures:
-                # Sanitze the paths to avoid betraying internals. This should
-                # always be a UUID
-                basename = PurePosixPath(f).name
-
-                image = self.db.get_image(existing_file_signatures[img.signature])
-                if not image:
-                    raise FileNotFoundError(
-                        f"Could not locate image in the database. {basename}"
-                    )
-
-                image_path = image.s3_object_path()
-
-                # Get a link to the S3 object to share with the client
-                url = self.minio.client.presigned_get_object(
-                    self.minio.bucket, image_path
-                )
-
-                possible_duplicates[basename] = url
-
-                logging.warning(
-                    f"Got possible duplicate. Uploaded file {basename} looks like existing file {existing_file_signatures[img.signature]} (Signature matches: {sig})"
-                )
-
-        return possible_duplicates
+            try:
+                # Save link to object in MeshDB (best effort)
+                url = image_object.url()
+                logging.info(url)
+                self.meshdb.save_panorama_on_building(building.id, url)
+            except:
+                logging.exception("Could not save panorama to MeshDB.")

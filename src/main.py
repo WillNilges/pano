@@ -1,14 +1,9 @@
-import dataclasses
-import json
 from flask import Flask, request
 from flask_cors import CORS
 from minio.error import S3Error
 import logging
 
 import pymeshdb
-from sqlalchemy.orm import Session
-from meshdb_client import MeshdbClient
-from models.image import Image, ImageCategory
 from pano import Pano
 from settings import UPLOAD_DIRECTORY, WORKING_DIRECTORY
 from storage import Storage
@@ -42,19 +37,13 @@ def main() -> None:
 
     @flask_app.route("/api/v1/install/<install_number>")
     def get_images_for_install_number(install_number: int):
-        images = pano.db.get_images(install_number=install_number)
-        serialized_images = []
-        for img in images:
-            i = dataclasses.asdict(img)
-            i["url"] = img.url()
-            serialized_images.append(i)
-
-        return serialized_images
+        return pano.get_images(install_number=install_number)
 
     @flask_app.route("/api/v1/upload", methods=["POST"])
     def upload():
         if "installNumber" not in request.values:
             logging.error("Bad Request! Missing Install # from header.")
+
 
         bypass_dupe_protection = (
             "trustMeBro" in request.values and request.values["trustMeBro"] == "true"
@@ -70,9 +59,12 @@ def main() -> None:
             logging.exception("Bad Request! Install # wasn't an integer.")
             return "Install # wasn't an integer", 400
 
-        dropzone_files = request.files.getlist("dropzoneImages[]")
+        if not pano.meshdb.get_primary_building_for_install():
+            e = "Could not find building for this install number. Is this a valid number?"
+            logging.error(e)
+            return e, 400
 
-        # pano.validate_filenames(dropzone_files)
+        dropzone_files = request.files.getlist("dropzoneImages[]")
 
         # We're gonna check each file for dupes. If we find a dupe, we keep track
         # of it and bail back to the client, changing nothing except for temp storage
