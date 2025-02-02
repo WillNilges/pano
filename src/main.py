@@ -49,8 +49,8 @@ def main() -> None:
             i["url"] = img.url()
             serialized_images.append(i)
 
-        return serialized_images 
- 
+        return serialized_images
+
     @flask_app.route("/api/v1/upload", methods=["POST"])
     def upload():
         if "installNumber" not in request.values:

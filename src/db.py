@@ -11,13 +11,17 @@ from models.image import Image, ImageCategory
 
 class PanoDB:
     def __init__(self) -> None:
-        self.engine = create_engine(os.environ['PG_CONN'], echo=False)
+        self.engine = create_engine(os.environ["PG_CONN"], echo=False)
         Base.metadata.create_all(self.engine)
 
-    def save_image(self, image:Image) -> Image:
+    def save_image(self, image: Image) -> Image:
         with Session(self.engine, expire_on_commit=False) as session:
-            # Get last ordered image
-            statement = select(Image).filter_by(install_number=install_number).order_by(Image.order.desc())
+            # Get last ordered image, or set this one to 0
+            statement = (
+                select(Image)
+                .filter_by(install_number=image.install_number)
+                .order_by(Image.order.desc())
+            )
             row = session.execute(statement).first()
             if row:
                 image.order = row[0].order + 1
@@ -28,7 +32,7 @@ class PanoDB:
             session.commit()
             return image
 
-    def delete_image(self, id: uuid.UUID): 
+    def delete_image(self, id: uuid.UUID):
         with Session(self.engine) as session:
             result = session.query(Image).filter(Image.id == id).first()
             session.delete(result)
