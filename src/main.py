@@ -1,5 +1,5 @@
-from datetime import datetime
-import uuid
+import dataclasses
+import json
 from flask import Flask, request
 from flask_cors import CORS
 from minio.error import S3Error
@@ -40,26 +40,17 @@ def main() -> None:
             "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
         )
 
-    @flask_app.route("/test_create_thingie")
-    def test_create_thingie():
-        with Session(pano.engine) as session:
-            i = Image(
-                id=uuid.uuid4(),
-                timestamp=datetime.now(),
-                install_number=1,
-                order=1,
-                category=ImageCategory.panoramas,
-            )
-            session.add_all([i])
-            session.commit()
-        return ""
-
     @flask_app.route("/api/v1/install/<install_number>")
     def get_images_for_install_number(install_number: int):
-        images = pano.minio.list_all_images(install_number=install_number)
-        s3_urls = list(f"{os.environ['MINIO_URL']}/{os.environ['MINIO_BUCKET']}/{i}" for i in images)
-        return s3_urls
+        images = pano.db.get_images(install_number=install_number)
+        serialized_images = []
+        for img in images:
+            i = dataclasses.asdict(img)
+            i["url"] = img.url()
+            serialized_images.append(i)
 
+        return serialized_images 
+ 
     @flask_app.route("/api/v1/upload", methods=["POST"])
     def upload():
         if "installNumber" not in request.values:
