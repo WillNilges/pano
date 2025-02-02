@@ -1,20 +1,17 @@
 import logging
-import os
 from pathlib import PurePosixPath
 import re
-import uuid
 
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+
 from db import PanoDB
 from meshdb_client import MeshdbClient
-from models.base import Base
-from models.image import ImageCategory
+from models.image import Image, ImageCategory
 from settings import MINIO_BUCKET, MINIO_URL
 from storage_minio import StorageMinio
-from wand.image import Image
+from wand.image import WandImage
 
-
+# I need to find a way to improve the abstraction of the database
 class Pano:
     def __init__(self) -> None:
         self.meshdb = MeshdbClient()
@@ -37,33 +34,18 @@ class Pano:
             raise ValueError("Could not find a building associated with that Install #")
 
         # Create a DB object
-        image_object = self.db.create_image(install_number, ImageCategory.panoramas)
+        image_object = Image(install_number=install_number, category=ImageCategory.panorama)
 
         # Upload object to S3
         self.minio.upload_images({image_object.s3_object_path(): file_path})
 
+        # If successful, save image to db
+        image_object = self.db.save_image(image_object)
+
         # Save link to object in MeshDB
-        # TODO: Perhaps it would be better to completely re-build the panorama
-        # list for that particular building each time we save? Edge case on that:
-        # we don't want to blow away panoramas from other installs.
-        url = f"http://{MINIO_URL}/{MINIO_BUCKET}/{image_object.s3_object_path()}"
+        url = image_object.url()
         logging.info(url)
         self.meshdb.save_panorama_on_building(building.id, url)
-
-    # TODO: Could we have a route to check the file names and see if there are
-    # dupes?
-
-    # Check that a filename already has the correct format.
-    # TODO (willnilges) If it does, and does not collide with existing images,
-    # then we'll take it at face value and not change it.
-    def validate_filenames(self, files) -> bool:
-        p = re.compile("^(\\d)+([a-z])*.([a-z])*")
-        for f in files:
-            filename = f.filename
-            match = p.match(filename)
-            if match.span() != (0, len(filename)):
-                return False
-        return True
 
     # Uses ImageMagick to check the hash of the files uploaded against photos
     # that already exist under an install. If a photo matches, the path is returned
@@ -86,7 +68,7 @@ class Pano:
         # of key: filename
         existing_file_signatures = {
             # Sanitze the paths to avoid betraying internals
-            Image(filename=f).signature: PurePosixPath(f).name
+            WandImage(filename=f).signature: PurePosixPath(f).name
             for f in existing_files
         }
 
@@ -94,7 +76,7 @@ class Pano:
         # existing image
         possible_duplicates = {}
         for f in uploaded_files:
-            img = Image(filename=f)
+            img = WandImage(filename=f)
             sig = img.signature
             if sig in existing_file_signatures:
                 # Sanitze the paths to avoid betraying internals. This should

@@ -11,35 +11,22 @@ from models.image import Image, ImageCategory
 
 class PanoDB:
     def __init__(self) -> None:
-        self.engine = create_engine(os.environ['PG_CONN'], echo=True)
+        self.engine = create_engine(os.environ['PG_CONN'], echo=False)
         Base.metadata.create_all(self.engine)
 
-    def create_image(self, install_number: int, category: ImageCategory) -> Image:
-        # TODO: Figure out order
-        # DO I want to order per category or overall? Probably both?
-
-        #install_images = self.get_images(install_number)
-
-        image_uuid = uuid.uuid4()
-
+    def save_image(self, image:Image) -> Image:
         with Session(self.engine, expire_on_commit=False) as session:
             # Get last ordered image
-            next_order = 0
             statement = select(Image).filter_by(install_number=install_number).order_by(Image.order.desc())
             row = session.execute(statement).first()
             if row:
-                next_order = row[0].order + 1
+                image.order = row[0].order + 1
+            else:
+                image.order = 0
 
-            i = Image(
-                id=image_uuid,
-                timestamp=datetime.now(),
-                install_number=install_number,
-                order=next_order,
-                category=category,
-            )
-            session.add_all([i])
+            session.add(image)
             session.commit()
-            return i
+            return image
 
     def delete_image(self, id: uuid.UUID): 
         with Session(self.engine) as session:
@@ -55,3 +42,14 @@ class PanoDB:
                 return row[0]
             logging.warning(f"Could not find image with id {id}")
             return None
+
+    def get_images(self, install_number: int) -> list[Image]:
+        images = []
+        with Session(self.engine, expire_on_commit=False) as session:
+            statement = select(Image).filter_by(install_number=int(install_number))
+            rows = session.execute(statement).fetchall()
+            if rows:
+                # FIXME: This is probably the wrong way to get this data
+                for r in rows:
+                    images.append(r[0])
+        return images

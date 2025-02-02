@@ -2,6 +2,35 @@
 
 A dummy-simple API in front of MinIO for storing and accessing panoramas in MeshDB.
 
+# Schema
+
+Pano keeps track of Images in Postgres. An Image has a uuid, a timestamp,
+an install_number, an order, and a category.
+
+- UUID: Simple unique identifier
+- Timestamp: When the image was uploaded
+- Install Number: The Install # this image is associated with
+- Order: What order clients should display this image in when querying
+for a specific install's images 
+- Category: An indicator of the image contents. A panorama with potential LOS,
+a photo of the equipment installed on the roof, or a notable detail about the
+building.
+
+## Notes about Schema
+
+When querying for a Node with multiple installs, the Images from the lower install
+number are returned first
+
+We should find some way to mark if a Node is visible in an Image. Maybe add a column for it
+Node Table, seen from: {uuid, uuid, uuid...}
+
+# S3
+
+We use MinIO to store images as objects. The schema for the path that identifies
+a particular object is very simple:
+
+`/<bucket name>/<install_number>/<uuid>`
+
 # Run
 
 Set up Database
