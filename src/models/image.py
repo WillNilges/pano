@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from models.base import Base
 from settings import MINIO_BUCKET, MINIO_URL
 
+
 # Or should I have tags?
 class ImageCategory(enum.Enum):
     panorama = 1
@@ -16,6 +17,7 @@ class ImageCategory(enum.Enum):
 
     def __html__(self):
         return self._name_
+
 
 @dataclass
 class Image(Base):
@@ -38,7 +40,7 @@ class Image(Base):
         return f"{self.install_number}/{self.id}"
 
     def url(self):
-        return  f"{MINIO_URL}/{MINIO_BUCKET}/{self.s3_object_path()}"
+        return f"{MINIO_URL}/{MINIO_BUCKET}/{self.s3_object_path()}"
 
-    #def __repr__(self) -> str:
+    # def __repr__(self) -> str:
     #    return f"Image(id={self.id}, timestamp={self.timestamp}, install_number={self.install_number}, order={self.order}, category={self.category})"

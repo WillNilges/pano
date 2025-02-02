@@ -11,6 +11,7 @@ from settings import MINIO_BUCKET, MINIO_URL
 from storage_minio import StorageMinio
 from wand.image import WandImage
 
+
 # I need to find a way to improve the abstraction of the database
 class Pano:
     def __init__(self) -> None:
@@ -34,7 +35,9 @@ class Pano:
             raise ValueError("Could not find a building associated with that Install #")
 
         # Create a DB object
-        image_object = Image(install_number=install_number, category=ImageCategory.panorama)
+        image_object = Image(
+            install_number=install_number, category=ImageCategory.panorama
+        )
 
         # Upload object to S3
         self.minio.upload_images({image_object.s3_object_path(): file_path})
@@ -85,7 +88,9 @@ class Pano:
 
                 image = self.db.get_image(existing_file_signatures[img.signature])
                 if not image:
-                    raise FileNotFoundError(f"Could not locate image in the database. {basename}")
+                    raise FileNotFoundError(
+                        f"Could not locate image in the database. {basename}"
+                    )
 
                 image_path = image.s3_object_path()
 
