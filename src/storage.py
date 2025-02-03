@@ -19,22 +19,5 @@ class Storage(ABC):
     # Returns a list of paths or URLs
     # Example: ["/path/to/a", "/path/to/b", "/path/to/c", ...]
     @abstractmethod
-    def list_all_objects(self) -> list[str]:
+    def list_all_objects(self, install_number: int) -> list[str]:
         pass
-
-    @abstractmethod
-    def check_for_duplicates(
-        self, install_number: int, uploaded_files: list[str]
-    ) -> dict[str, str]:
-        pass
-
-    # Returns a list of all the images this storage knows about, while also
-    # handling any differences in abstraction *cough* github *cough*
-    # Returns a dictionary mapping Install Numbers(?) to a list of paths
-    # Example: {
-    # 1001: ["/path/to/a", "/path/to/b", ...],
-    # 1002: ["/path/to/a", "/path/to/b", ...]
-    # }
-    # @abstractmethod
-    # def get_inventory(self) -> dict[int, list[str]]:
-    #    pass

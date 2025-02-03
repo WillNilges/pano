@@ -74,15 +74,20 @@ class StorageMinio(Storage):
     def get_object_path(install_number: int, id: uuid.UUID) -> str:
         return f"{install_number}/{id}"
 
-    # Uses ImageMagick to check the hash of the files uploaded against photos
-    # that already exist under an install. If a photo matches, the path is returned
-    # in the list.
 
     # This is probably going to be really expensive, so best to limit its use.
     # XXX (wdn): Perhaps we should somehow cache the signatures of our files?
+
+    # FIXME (wdn): This is not the job of the storage medium. Move this to Pano
     def check_for_duplicates(
-        self, install_number: int, uploaded_files: list[str]
+        self, install_number: int, uploaded_file_signature: bytes 
     ) -> dict[str, str]:
+        """
+        Uses ImageMagick to check the hash of the files uploaded against photos
+        that already exist under an install. If a photo matches, the path is returned
+        in the list.
+        """
+
         # First, download any images that might exist for this install number
         existing_files = self.download_objects(self.list_all_objects(install_number))
         # If there are no existing files, we're done.
