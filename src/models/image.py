@@ -5,7 +5,7 @@ import enum
 from sqlalchemy import DateTime, select
 from sqlalchemy.orm import Mapped, Session, mapped_column
 from models.base import Base
-from settings import MINIO_BUCKET, MINIO_URL
+from settings import MINIO_BUCKET, MINIO_SECURE, MINIO_URL
 from storage_minio import StorageMinio
 
 
@@ -29,7 +29,7 @@ class Image(Base):
     install_number: Mapped[int] = mapped_column()
     order: Mapped[int] = mapped_column()
     category: Mapped[ImageCategory] = mapped_column()
-    #signature: Mapped[str] = mapped_column() # The hash of the image
+    # signature: Mapped[str] = mapped_column() # The hash of the image
 
     def __init__(self, session: Session, install_number: int, category: ImageCategory):
         self.id = uuid.uuid4()
@@ -52,7 +52,7 @@ class Image(Base):
         super().__init__()
 
     def get_object_path(self):
-        return StorageMinio.get_object_path(self.install_number, self.id) 
+        return StorageMinio.get_object_path(self.install_number, self.id)
 
     def url(self):
         return f"{'https://' if MINIO_SECURE else 'http://'}{MINIO_URL}/{MINIO_BUCKET}/{self.get_object_path()}"

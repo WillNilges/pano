@@ -20,9 +20,7 @@ class MeshdbClient:
         self.b = pymeshdb.BuildingsApi(self.c)
 
     def get_primary_building_for_install(self, install_number: int) -> Building | None:
-        buildings = self.b.api_v1_buildings_lookup_list(
-            install_number=install_number
-        )
+        buildings = self.b.api_v1_buildings_lookup_list(install_number=install_number)
         if not buildings.results:
             return None
         first_building = buildings.results[0]

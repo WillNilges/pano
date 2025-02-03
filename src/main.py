@@ -44,7 +44,6 @@ def main() -> None:
         if "installNumber" not in request.values:
             logging.error("Bad Request! Missing Install # from header.")
 
-
         bypass_dupe_protection = (
             "trustMeBro" in request.values and request.values["trustMeBro"] == "true"
         )

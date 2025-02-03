@@ -5,12 +5,12 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from models.base import Base
-from models.image import Image 
+from models.image import Image
 
 
 class PanoDB:
-    def __init__(self) -> None:
-        self.engine = create_engine(os.environ["PG_CONN"], echo=False)
+    def __init__(self, connection_string=os.environ["PG_CONN"]) -> None:
+        self.engine = create_engine(connection_string, echo=False)
         Base.metadata.create_all(self.engine)
 
     def delete_image(self, id: uuid.UUID):

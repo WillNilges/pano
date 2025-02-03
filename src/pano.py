@@ -16,12 +16,17 @@ from storage import Storage
 from storage_minio import StorageMinio
 
 
-# I need to find a way to improve the abstraction of the database
+# TODO (wdn): I need to find a way to improve the abstraction of the database
 class Pano:
-    def __init__(self) -> None:
-        self.meshdb: MeshdbClient = MeshdbClient()
-        self.storage: Storage = StorageMinio()
-        self.db: PanoDB = PanoDB()
+    def __init__(
+        self,
+        meshdb: MeshdbClient = MeshdbClient(),
+        storage: Storage = StorageMinio(),
+        db: PanoDB = PanoDB(),
+    ) -> None:
+        self.meshdb: MeshdbClient = meshdb
+        self.storage: Storage = storage
+        self.db: PanoDB = db
 
     def get_images(self, install_number: int) -> list[dict]:
         images = self.db.get_images(install_number=install_number)
@@ -39,7 +44,9 @@ class Pano:
     ) -> dict[str, str] | None:
         # Firstly, check the images for possible duplicates.
         if not bypass_dupe_protection:
-            possible_duplicates = self.storage.check_for_duplicates(install_number, [file_path])
+            possible_duplicates = self.storage.check_for_duplicates(
+                install_number, [file_path]
+            )
             if possible_duplicates:
                 return possible_duplicates
 
@@ -68,5 +75,6 @@ class Pano:
                 url = image_object.url()
                 logging.info(url)
                 self.meshdb.save_panorama_on_building(building.id, url)
-            except:
+            except Exception as e:
                 logging.exception("Could not save panorama to MeshDB.")
+                raise e

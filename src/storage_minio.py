@@ -84,9 +84,7 @@ class StorageMinio(Storage):
         self, install_number: int, uploaded_files: list[str]
     ) -> dict[str, str]:
         # First, download any images that might exist for this install number
-        existing_files = self.download_objects(
-            self.list_all_objects(install_number)
-        )
+        existing_files = self.download_objects(self.list_all_objects(install_number))
         # If there are no existing files, we're done.
         if not existing_files:
             return {}
@@ -110,12 +108,12 @@ class StorageMinio(Storage):
                 # always be a UUID
                 basename = PurePosixPath(f).name
 
-                image_path = self.get_object_path(install_number, uuid.UUID(existing_file_signatures[img.signature]))
+                image_path = self.get_object_path(
+                    install_number, uuid.UUID(existing_file_signatures[img.signature])
+                )
 
                 # Get a link to the S3 object to share with the client
-                url = self.client.presigned_get_object(
-                    self.bucket, image_path
-                )
+                url = self.client.presigned_get_object(self.bucket, image_path)
 
                 possible_duplicates[basename] = url
 
