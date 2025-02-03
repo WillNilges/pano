@@ -82,4 +82,18 @@ class TestPanoDB(unittest.TestCase):
         self.assertEqual(2, len(self.pano.get_images(1)))
 
     def test_failed_to_upload_to_s3(self):
-        pass
+        self.minio.upload_objects.side_effect = Exception()
+        
+        self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING]
+
+        self.minio.check_for_duplicates.side_effect = [
+            None,
+        ]
+
+        with self.assertRaises(Exception):
+            r = self.pano.handle_upload(
+                1, "./src/tests/sample_images/pano.png" 
+            )
+
+        # Make sure there are no images in the DB
+        self.assertEqual(0, len(self.pano.get_images(1)))

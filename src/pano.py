@@ -64,7 +64,11 @@ class Pano:
             )
 
             # Upload object to S3
-            self.storage.upload_objects({image_object.get_object_path(): file_path})
+            try:
+                self.storage.upload_objects({image_object.get_object_path(): file_path})
+            except Exception as e:
+                logging.exception("Failed to upload object to S3.")
+                raise e
 
             # If successful, save image object to DB
             session.add(image_object)
