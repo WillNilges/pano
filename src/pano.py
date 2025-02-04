@@ -59,7 +59,7 @@ class Pano:
 
             # Check the images for possible duplicates.
             if not bypass_dupe_protection:
-                possible_duplicates = self.check_for_duplicates(
+                possible_duplicates = self.detect_duplicates(
                     install_number, image_object
                 )
                 if possible_duplicates:
@@ -85,7 +85,7 @@ class Pano:
                 logging.exception("Could not save panorama to MeshDB.")
                 raise e
 
-    def check_for_duplicates(
+    def detect_duplicates(
         self, install_number: int, uploaded_image: Image 
     ) -> dict[str, str]:
         """
