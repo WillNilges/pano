@@ -88,15 +88,6 @@ class Pano:
             session.add(image_object)
             session.commit()
 
-            try:
-                # Save link to object in MeshDB (best effort)
-                url = image_object.get_object_url()
-                logging.info(url)
-                self.meshdb.save_panorama_on_building(building.id, url)
-            except Exception as e:
-                logging.exception("Could not save panorama to MeshDB.")
-                raise e
-
     def detect_duplicates(
         self, install_number: int, uploaded_image: Image
     ) -> dict[str, str]:
