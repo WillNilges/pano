@@ -28,12 +28,23 @@ class Pano:
         self.storage: Storage = storage
         self.db: PanoDB = db
 
+    def get_all_images(self, category: ImageCategory | None=None) -> dict[int, list[dict]]:
+        serialized_images = {}
+        for image in self.db.get_images():
+            if not serialized_images.get(image.install_number):
+                serialized_images[image.install_number] = []
+
+            i = dataclasses.asdict(image)
+            i["url"] = image.get_object_url()
+            serialized_images[image.install_number].append(i)
+        return serialized_images
+
     def get_images(self, install_number: int) -> list[dict]:
         images = self.db.get_images(install_number=install_number)
         serialized_images = []
-        for img in images:
-            i = dataclasses.asdict(img)
-            i["url"] = img.get_object_url()
+        for image in images:
+            i = dataclasses.asdict(image)
+            i["url"] = image.get_object_url()
             serialized_images.append(i)
 
         print(serialized_images)

@@ -28,10 +28,13 @@ class PanoDB:
             logging.warning(f"Could not find image with id {id}")
             return None
 
-    def get_images(self, install_number: int) -> list[Image]:
+    def get_images(self, install_number: int | None=None) -> list[Image]:
         images = []
         with Session(self.engine, expire_on_commit=False) as session:
-            statement = select(Image).filter_by(install_number=int(install_number))
+            if install_number:
+                statement = select(Image).filter_by(install_number=int(install_number))
+            else:
+                statement = select(Image)
             rows = session.execute(statement).fetchall()
             if rows:
                 # FIXME: This is probably the wrong way to get this data

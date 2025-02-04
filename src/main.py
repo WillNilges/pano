@@ -4,6 +4,7 @@ from minio.error import S3Error
 import logging
 
 import pymeshdb
+from models.image import ImageCategory
 from pano import Pano
 from settings import UPLOAD_DIRECTORY, WORKING_DIRECTORY
 from storage import Storage
@@ -34,6 +35,11 @@ def main() -> None:
         return (
             "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
         )
+
+    @flask_app.route("/api/v1/<category>")
+    def get_all_images(category):
+        j = jsonify(pano.get_all_images(ImageCategory[category]))
+        return j, 200
 
     @flask_app.route("/api/v1/install/<install_number>")
     def get_images_for_install_number(install_number: int):
