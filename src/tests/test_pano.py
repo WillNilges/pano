@@ -1,3 +1,4 @@
+from pathlib import PurePosixPath
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -6,8 +7,9 @@ from sqlalchemy.orm import Session
 
 from db import PanoDB
 from models.base import Base
-from models.image import Image, ImageCategory
+from models.image import ImageCategory
 from pano import Pano
+from settings import MINIO_URL
 
 SAMPLE_BUILDING = Building(
     id="one",
@@ -21,6 +23,8 @@ SAMPLE_BUILDING = Building(
     latitude=0,
     longitude=0,
 )
+
+SAMPLE_IMAGE_PATH = "./src/tests/sample_images/pano.png"
 
 
 class TestPanoDB(unittest.TestCase):
@@ -40,41 +44,33 @@ class TestPanoDB(unittest.TestCase):
     def test_handle_upload(self):
         self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING]
 
-        self.minio.check_for_duplicates.side_effect = [
-            None,
-        ]
-
-        r = self.pano.handle_upload(1, "./src/tests/sample_images/pano.png")
+        r = self.pano.handle_upload(1, SAMPLE_IMAGE_PATH)
         self.assertIsNone(r)
 
-    # @patch("storage.Storage.check_for_duplicates")
+        self.assertEqual(1, len(self.pano.get_images(1)))
+
     def test_handle_duplicate_upload(self):
         self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING, SAMPLE_BUILDING]
 
-        self.minio.check_for_duplicates.side_effect = [
-            None,
-            {"some-uuid": "http://some-url.com"},
-        ]
-
-        r = self.pano.handle_upload(1, "./src/tests/sample_images/pano.png")
+        r = self.pano.handle_upload(1, SAMPLE_IMAGE_PATH)
         self.assertIsNone(r)
-        r = self.pano.handle_upload(1, "./src/tests/sample_images/pano.png")
-        self.assertEqual({"some-uuid": "http://some-url.com"}, r)
+
+        r = self.pano.handle_upload(1, SAMPLE_IMAGE_PATH)
+
+        all_images = self.pano.get_images(1)
+
+        self.assertEqual({PurePosixPath(SAMPLE_IMAGE_PATH).name: f"http://{MINIO_URL}/panoramas/1/{all_images[0]["id"]}"}, r)
+        self.assertEqual(1, len(all_images))
 
     def test_handle_upload_with_bypass_dupe(self):
         self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING, SAMPLE_BUILDING]
 
-        self.minio.check_for_duplicates.side_effect = [
-            None,
-            {"some-uuid": "http://some-url.com"},
-        ]
-
         r = self.pano.handle_upload(
-            1, "./src/tests/sample_images/pano.png", bypass_dupe_protection=True
+            1, SAMPLE_IMAGE_PATH, bypass_dupe_protection=True
         )
         self.assertIsNone(r)
         r = self.pano.handle_upload(
-            1, "./src/tests/sample_images/pano.png", bypass_dupe_protection=True
+            1, SAMPLE_IMAGE_PATH, bypass_dupe_protection=True
         )
         self.assertIsNone(r)
 
@@ -86,14 +82,25 @@ class TestPanoDB(unittest.TestCase):
         
         self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING]
 
-        self.minio.check_for_duplicates.side_effect = [
-            None,
-        ]
-
         with self.assertRaises(Exception):
             r = self.pano.handle_upload(
-                1, "./src/tests/sample_images/pano.png" 
+                1,  SAMPLE_IMAGE_PATH
             )
 
         # Make sure there are no images in the DB
         self.assertEqual(0, len(self.pano.get_images(1)))
+
+    def test_get_images(self):
+        self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING]
+
+        r = self.pano.handle_upload(1, SAMPLE_IMAGE_PATH)
+        self.assertIsNone(r)
+
+        self.assertEqual(1, len(self.pano.get_images(1)))
+
+        all_images = self.pano.get_images(1)
+        for i in all_images:
+            self.assertEqual(1, i["install_number"])
+            self.assertEqual(ImageCategory.panorama, i["category"])
+            self.assertEqual(0, i["order"])
+            self.assertEqual("pano.png", i["original_filename"])

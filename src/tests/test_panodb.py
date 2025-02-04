@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from db import PanoDB
 from models.base import Base
 from models.image import Image, ImageCategory
+from tests.test_pano import SAMPLE_IMAGE_PATH
 
 
 class TestPanoDB(unittest.TestCase):
@@ -14,7 +15,7 @@ class TestPanoDB(unittest.TestCase):
 
         self.session = Session(self.db.engine)
         self.image = Image(
-            session=self.session, install_number=1, category=ImageCategory.panorama
+            session=self.session, path=SAMPLE_IMAGE_PATH, install_number=1, category=ImageCategory.panorama
         )
         self.session.add(self.image)
         self.session.commit()

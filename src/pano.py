@@ -33,7 +33,7 @@ class Pano:
         serialized_images = []
         for img in images:
             i = dataclasses.asdict(img)
-            i["url"] = img.url()
+            i["url"] = img.get_object_url()
             serialized_images.append(i)
 
         return serialized_images
@@ -59,8 +59,8 @@ class Pano:
 
             # Check the images for possible duplicates.
             if not bypass_dupe_protection:
-                possible_duplicates = self.storage.check_for_duplicates(
-                    install_number, image_object.signature
+                possible_duplicates = self.check_for_duplicates(
+                    install_number, image_object
                 )
                 if possible_duplicates:
                     return possible_duplicates
@@ -78,7 +78,7 @@ class Pano:
 
             try:
                 # Save link to object in MeshDB (best effort)
-                url = image_object.url()
+                url = image_object.get_object_url()
                 logging.info(url)
                 self.meshdb.save_panorama_on_building(building.id, url)
             except Exception as e:
@@ -103,51 +103,6 @@ class Pano:
                 possible_duplicates[i.original_filename] = i.get_object_url()
                 logging.warning(
                     f"Got possible duplicate. Uploaded file '{uploaded_image.original_filename}' looks like existing file '{i.original_filename}' (Signature matches: {i.signature})"
-                )
-
-        return possible_duplicates
-
-
-        ###
-
-        # Download any images that might exist for this install number
-        existing_files = self.storage.download_objects(self.storage.list_all_objects(install_number))
-        # If there are no existing files, we're done.
-        if not existing_files:
-            return {}
-
-        
-
-        # Else, we'll have to grab the signatures and compare them. Create a dictionary
-        # of key: filename
-        existing_file_signatures = {
-            # Sanitze the paths to avoid betraying internals
-            WandImage(filename=f).signature: PurePosixPath(f).name
-            for f in existing_files
-        }
-
-        # Check if any of the images we received have a matching signature to an
-        # existing image
-        possible_duplicates = {}
-        for f in uploaded_files:
-            img = WandImage(filename=f)
-            sig = img.signature
-            if sig in existing_file_signatures:
-                # Sanitze the paths to avoid betraying internals. This should
-                # always be a UUID
-                basename = PurePosixPath(f).name
-
-                image_path = self.get_object_path(
-                    install_number, uuid.UUID(existing_file_signatures[img.signature])
-                )
-
-                # Get a link to the S3 object to share with the client
-                url = self.client.presigned_get_object(self.bucket, image_path)
-
-                possible_duplicates[basename] = url
-
-                logging.warning(
-                    f"Got possible duplicate. Uploaded file {basename} looks like existing file {existing_file_signatures[img.signature]} (Signature matches: {sig})"
                 )
 
         return possible_duplicates

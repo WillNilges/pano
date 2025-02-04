@@ -32,7 +32,7 @@ class Image(Base):
     category: Mapped[ImageCategory] = mapped_column()
     order: Mapped[int] = mapped_column()
     # The hash of the image generated from ImageMagick
-    signature: Mapped[bytes] = mapped_column()
+    signature: Mapped[str] = mapped_column()
     # The name of the file when it was uploaded
     original_filename: Mapped[str] = mapped_column()
 
@@ -64,7 +64,8 @@ class Image(Base):
         sig = WandImage(filename=path).signature
         if sig:
             try:
-                self.signature = sig 
+                # Not sure why, but my linter complains unless I hard cast this to str.
+                self.signature = str(sig)
             except ValueError as e:
                 logging.exception("Could not get signature for image")
                 raise e
