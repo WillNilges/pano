@@ -25,6 +25,7 @@ SAMPLE_BUILDING = Building(
 )
 
 SAMPLE_IMAGE_PATH = "./src/tests/sample_images/pano.png"
+SAMPLE_IMAGE_PATH_2 = "./src/tests/sample_images/logo.jpg"
 
 
 class TestPanoDB(unittest.TestCase):
@@ -98,16 +99,24 @@ class TestPanoDB(unittest.TestCase):
         self.assertEqual(0, len(self.pano.get_images(1)))
 
     def test_get_images(self):
-        self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING]
+        self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING, SAMPLE_BUILDING]
 
         r = self.pano.handle_upload(1, SAMPLE_IMAGE_PATH)
         self.assertIsNone(r)
 
-        self.assertEqual(1, len(self.pano.get_images(1)))
+        r = self.pano.handle_upload(1, SAMPLE_IMAGE_PATH_2)
+        self.assertIsNone(r)
 
         all_images = self.pano.get_images(1)
-        for i in all_images:
-            self.assertEqual(1, i["install_number"])
-            self.assertEqual(ImageCategory.panorama, i["category"])
-            self.assertEqual(0, i["order"])
-            self.assertEqual("pano.png", i["original_filename"])
+
+        self.assertEqual(2, len(all_images))
+
+        self.assertEqual(1, all_images[0]["install_number"])
+        self.assertEqual(ImageCategory.uncategorized, all_images[0]["category"])
+        self.assertEqual(-1, all_images[0]["order"])
+        self.assertEqual("pano.png", all_images[0]["original_filename"])
+
+        self.assertEqual(1, all_images[1]["install_number"])
+        self.assertEqual(ImageCategory.uncategorized, all_images[1]["category"])
+        self.assertEqual(-1, all_images[1]["order"])
+        self.assertEqual("logo.jpg", all_images[1]["original_filename"])

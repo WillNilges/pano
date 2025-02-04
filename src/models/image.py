@@ -18,7 +18,8 @@ class ImageCategory(enum.Enum):
     panorama = "PANORAMA"
     equipment = "EQUIPMENT"
     detail = "DETAIL"
-    misc = "MISC"
+    miscellaneous = "MISCELLANEOUS"
+    uncategorized = "UNCATEGORIZED"
 
     def __html__(self):
         return self._name_
@@ -40,7 +41,6 @@ class Image(Base):
 
     def __init__(
         self,
-        session: Session | None,
         path: str,
         install_number: int,
         category: ImageCategory,
@@ -50,23 +50,8 @@ class Image(Base):
         self.install_number = install_number
         self.category = category
 
-        # Figure out the order of the photo
+        # By default, the images have no order. Set to -1 to represent that.
         self.order = -1
-
-        # (Optional: Provide session so that we can append this one to the end)
-        if session:
-            # Fetch the last order for this install_number and increment
-            max_order = session.execute(
-                select(Image.order)
-                .where(Image.install_number == install_number)
-                .order_by(Image.order.desc())
-                .limit(1)
-            ).scalar_one_or_none()
-
-            if max_order:
-                self.order = max_order
-            else:
-                self.order = 0
 
         # Store a signature for the image
         sig = WandImage(filename=path).signature

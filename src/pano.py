@@ -64,10 +64,9 @@ class Pano:
         with Session(self.db.engine, expire_on_commit=False) as session:
             # Create a DB object
             image_object = Image(
-                session=session,
                 path=file_path,
                 install_number=install_number,
-                category=ImageCategory.panorama,
+                category=ImageCategory.uncategorized,
             )
 
             # Check the images for possible duplicates.

@@ -15,7 +15,6 @@ class TestPanoDB(unittest.TestCase):
 
         self.session = Session(self.db.engine)
         self.image = Image(
-            session=self.session,
             path=SAMPLE_IMAGE_PATH,
             install_number=1,
             category=ImageCategory.panorama,
@@ -26,7 +25,7 @@ class TestPanoDB(unittest.TestCase):
     def tearDown(self):
         Base.metadata.drop_all(self.db.engine)
 
-    def test_query_panel(self):
+    def test_query(self):
         expected = [self.image]
         result = self.session.query(Image).all()
         self.assertEqual(result, expected)
