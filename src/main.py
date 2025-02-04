@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from minio.error import S3Error
 import logging
@@ -37,7 +37,8 @@ def main() -> None:
 
     @flask_app.route("/api/v1/install/<install_number>")
     def get_images_for_install_number(install_number: int):
-        return pano.get_images(install_number=install_number)
+        j = jsonify(pano.get_images(install_number=install_number))
+        return j, 200
 
     @flask_app.route("/api/v1/upload", methods=["POST"])
     def upload():
@@ -58,7 +59,7 @@ def main() -> None:
             logging.exception("Bad Request! Install # wasn't an integer.")
             return "Install # wasn't an integer", 400
 
-        if not pano.meshdb.get_primary_building_for_install():
+        if not pano.meshdb.get_primary_building_for_install(install_number):
             e = "Could not find building for this install number. Is this a valid number?"
             logging.error(e)
             return e, 400

@@ -50,7 +50,10 @@ class TestPanoDB(unittest.TestCase):
         self.assertEqual(1, len(self.pano.get_images(1)))
 
     def test_handle_duplicate_upload(self):
-        self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING, SAMPLE_BUILDING]
+        self.meshdb.get_primary_building_for_install.side_effect = [
+            SAMPLE_BUILDING,
+            SAMPLE_BUILDING,
+        ]
 
         r = self.pano.handle_upload(1, SAMPLE_IMAGE_PATH)
         self.assertIsNone(r)
@@ -59,19 +62,25 @@ class TestPanoDB(unittest.TestCase):
 
         all_images = self.pano.get_images(1)
 
-        self.assertEqual({PurePosixPath(SAMPLE_IMAGE_PATH).name: f"http://{MINIO_URL}/panoramas/1/{all_images[0]["id"]}"}, r)
+        self.assertEqual(
+            {
+                PurePosixPath(
+                    SAMPLE_IMAGE_PATH
+                ).name: f"http://{MINIO_URL}/panoramas/1/{all_images[0]['id']}"
+            },
+            r,
+        )
         self.assertEqual(1, len(all_images))
 
     def test_handle_upload_with_bypass_dupe(self):
-        self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING, SAMPLE_BUILDING]
+        self.meshdb.get_primary_building_for_install.side_effect = [
+            SAMPLE_BUILDING,
+            SAMPLE_BUILDING,
+        ]
 
-        r = self.pano.handle_upload(
-            1, SAMPLE_IMAGE_PATH, bypass_dupe_protection=True
-        )
+        r = self.pano.handle_upload(1, SAMPLE_IMAGE_PATH, bypass_dupe_protection=True)
         self.assertIsNone(r)
-        r = self.pano.handle_upload(
-            1, SAMPLE_IMAGE_PATH, bypass_dupe_protection=True
-        )
+        r = self.pano.handle_upload(1, SAMPLE_IMAGE_PATH, bypass_dupe_protection=True)
         self.assertIsNone(r)
 
         # Make sure there are two records in the DB
@@ -79,13 +88,11 @@ class TestPanoDB(unittest.TestCase):
 
     def test_failed_to_upload_to_s3(self):
         self.minio.upload_objects.side_effect = Exception()
-        
+
         self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING]
 
         with self.assertRaises(Exception):
-            r = self.pano.handle_upload(
-                1,  SAMPLE_IMAGE_PATH
-            )
+            r = self.pano.handle_upload(1, SAMPLE_IMAGE_PATH)
 
         # Make sure there are no images in the DB
         self.assertEqual(0, len(self.pano.get_images(1)))

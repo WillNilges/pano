@@ -15,7 +15,10 @@ class TestPanoDB(unittest.TestCase):
 
         self.session = Session(self.db.engine)
         self.image = Image(
-            session=self.session, path=SAMPLE_IMAGE_PATH, install_number=1, category=ImageCategory.panorama
+            session=self.session,
+            path=SAMPLE_IMAGE_PATH,
+            install_number=1,
+            category=ImageCategory.panorama,
         )
         self.session.add(self.image)
         self.session.commit()

@@ -43,6 +43,9 @@ class StorageMinio(Storage):
                 self.bucket,
                 path,
                 file,
+                metadata={
+                    "Content-type": "image",
+                },
             )
             log.info(f"Uploaded {file} to {path} in {self.bucket}")
 

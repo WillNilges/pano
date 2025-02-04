@@ -12,6 +12,7 @@ from storage_minio import StorageMinio
 
 from wand.image import Image as WandImage
 
+
 # Or should I have tags?
 class ImageCategory(enum.Enum):
     panorama = "PANORAMA"
@@ -21,6 +22,7 @@ class ImageCategory(enum.Enum):
 
     def __html__(self):
         return self._name_
+
 
 @dataclass
 class Image(Base):
@@ -36,7 +38,13 @@ class Image(Base):
     # The name of the file when it was uploaded
     original_filename: Mapped[str] = mapped_column()
 
-    def __init__(self, session: Session | None, path: str, install_number: int, category: ImageCategory):
+    def __init__(
+        self,
+        session: Session | None,
+        path: str,
+        install_number: int,
+        category: ImageCategory,
+    ):
         self.id = uuid.uuid4()
         self.timestamp = datetime.now()
         self.install_number = install_number

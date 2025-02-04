@@ -36,6 +36,8 @@ class Pano:
             i["url"] = img.get_object_url()
             serialized_images.append(i)
 
+        print(serialized_images)
+
         return serialized_images
 
     # Mocking some kind of upload portal with an array of strings
@@ -43,7 +45,7 @@ class Pano:
         self, install_number: int, file_path: str, bypass_dupe_protection: bool = False
     ) -> dict[str, str] | None:
         building = self.meshdb.get_primary_building_for_install(install_number)
-        # TODO: Distinguish between the server erroring, and getting passed a 
+        # TODO: Distinguish between the server erroring, and getting passed a
         # bad install #
         if not building:
             raise ValueError("Could not find a building associated with that Install #")
@@ -86,7 +88,7 @@ class Pano:
                 raise e
 
     def detect_duplicates(
-        self, install_number: int, uploaded_image: Image 
+        self, install_number: int, uploaded_image: Image
     ) -> dict[str, str]:
         """
         Uses ImageMagick to check the hash of the files uploaded against photos
