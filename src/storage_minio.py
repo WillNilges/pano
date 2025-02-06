@@ -12,13 +12,13 @@ log = logging.getLogger("pano.storage_minio")
 
 
 class StorageMinio(Storage):
-    def __init__(self) -> None:
+    def __init__(self, bucket: str=MINIO_BUCKET) -> None:
         log.info("Configuring Minio Storage...")
         # Get env vars like this so that we crash if they're missing
         minio_url = MINIO_URL
         minio_access_key = os.environ["MINIO_ACCESS_KEY"]
         minio_secret_key = os.environ["MINIO_SECRET_KEY"]
-        self.bucket = MINIO_BUCKET
+        self.bucket = bucket
         minio_secure = MINIO_SECURE
 
         # Create a client with the MinIO server playground, its access key
