@@ -14,6 +14,8 @@ import shutil
 from flask import Flask, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 
+from jwt_token_auth import token_required
+
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 logging.basicConfig(
@@ -46,7 +48,9 @@ def get_images_for_install_number(install_number: int):
     return j, 200
 
 @app.route("/api/v1/upload", methods=["POST"])
+@token_required
 def upload():
+    logging.info("Received upload request.")
     if "installNumber" not in request.values:
         logging.error("Bad Request! Missing Install # from header.")
 

@@ -47,6 +47,12 @@ Use a venv
 
 `flask --app app run` or `gunicorn -w 4 'main:app'`
 
+## Token
+
+Get a token by using jwt with your client name 
+
+`python -c 'from dotenv import load_dotenv; import jwt; import os; load_dotenv(); print(jwt.encode({"client": "my_client"}, os.environ.get("PANO_SECRET_KEY"), algorithm="HS256"))'`
+
 ## Troubleshooting
 
 The API Token needs Read Only, and the ability to `Change Building`
