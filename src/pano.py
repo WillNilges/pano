@@ -27,7 +27,9 @@ class Pano:
         self.storage: Storage = storage
         self.db: PanoDB = db
 
-    def get_all_images(self, category: ImageCategory | None=None) -> dict[int, list[dict]]:
+    def get_all_images(
+        self, category: ImageCategory | None = None
+    ) -> dict[int, list[dict]]:
         serialized_images = {}
         for image in self.db.get_images():
             if not serialized_images.get(image.install_number):

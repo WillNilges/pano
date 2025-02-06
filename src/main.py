@@ -32,20 +32,22 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1000 * 1000
 app.config["SECRET_KEY"] = "chomskz"
 
+
 def allowed_file(filename):
-    return (
-        "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-    )
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @app.route("/api/v1/<category>")
 def get_all_images(category):
     j = jsonify(pano.get_all_images(ImageCategory[category]))
     return j, 200
 
+
 @app.route("/api/v1/install/<install_number>")
 def get_images_for_install_number(install_number: int):
     j = jsonify(pano.get_images(install_number=install_number))
     return j, 200
+
 
 @app.route("/api/v1/upload", methods=["POST"])
 @token_required
@@ -53,6 +55,7 @@ def upload():
     logging.info("Received upload request.")
     if "installNumber" not in request.values:
         logging.error("Bad Request! Missing Install # from header.")
+        return {"detail": "Missing Install # from header"}, 400
 
     bypass_dupe_protection = (
         "trustMeBro" in request.values and request.values["trustMeBro"] == "true"
@@ -60,16 +63,18 @@ def upload():
     # check if the post request has the file part
     if "dropzoneImages[]" not in request.files:
         logging.error("Bad Request! Found no files.")
-        return "Found no files. Maybe the request is malformed?", 400
+        return {"detail": "Found no files. Maybe the request is malformed?"}, 400
 
     try:
         install_number = int(request.values["installNumber"])
     except ValueError:
-        logging.exception("Bad Request! Install # wasn't an integer.")
-        return "Install # wasn't an integer", 400
+        logging.error("Bad Request! Install # wasn't an integer.")
+        return {"detail": "Install # wasn't an integer"}, 400
 
     if not pano.meshdb.get_primary_building_for_install(install_number):
-        e = "Could not find building for this install number. Is this a valid number?"
+        e = {
+            "detail": "Could not find building for this install number. Is this a valid number?"
+        }
         logging.error(e)
         return e, 400
 
@@ -85,7 +90,7 @@ def upload():
         # empty file without a filename.
         if not file.filename:
             logging.error("No filename?")
-            return "No filename?", 400
+            return {"detail": "File has no filename"}, 400
         if file and allowed_file(file.filename):
             # Sanitize input
             filename = secure_filename(file.filename)
@@ -111,12 +116,14 @@ def upload():
                     continue
             except ValueError as e:
                 logging.exception(
-                    "Bad Request! Could not find a building associated with that Install #"
+                    "Something went wrong processing this panorama upload"
                 )
-                return e, 400
+                return {
+                    "detail": "Something went wrong processing this panorama upload"
+                }, 400
             except pymeshdb.exceptions.BadRequestException:
                 logging.exception("Problem communicating with MeshDB.")
-                return "There was a problem communicating with MeshDB.", 500
+                return {"detail": "There was a problem communicating with MeshDB."}, 500
 
     # Clean up working directory
     shutil.rmtree(WORKING_DIRECTORY)
@@ -127,7 +134,7 @@ def upload():
 
     return "", 201
 
+
 @app.route("/", methods=["GET", "POST"])
 def home():
-    return 'whats up dog'
-
+    return "whats up dog"

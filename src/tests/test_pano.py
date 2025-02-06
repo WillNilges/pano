@@ -99,7 +99,10 @@ class TestPanoDB(unittest.TestCase):
         self.assertEqual(0, len(self.pano.get_images(1)))
 
     def test_get_images(self):
-        self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING, SAMPLE_BUILDING]
+        self.meshdb.get_primary_building_for_install.side_effect = [
+            SAMPLE_BUILDING,
+            SAMPLE_BUILDING,
+        ]
 
         r = self.pano.handle_upload(1, SAMPLE_IMAGE_PATH)
         self.assertIsNone(r)
