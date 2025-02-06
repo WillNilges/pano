@@ -16,7 +16,6 @@ from storage import Storage
 from storage_minio import StorageMinio
 
 
-# TODO (wdn): I need to find a way to improve the abstraction of the database
 class Pano:
     def __init__(
         self,
