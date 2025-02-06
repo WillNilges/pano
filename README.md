@@ -43,11 +43,9 @@ docker exec -it meshdb-postgres-1 psql -U meshdb -d postgres
 
 Use a venv
 
-```
-pip install -e '.[dev]'
-```
+`pip install -e '.[dev]'`
 
-`python src/main.py`
+`flask --app app run` or `gunicorn -w 4 'main:app'`
 
 ## Troubleshooting
 

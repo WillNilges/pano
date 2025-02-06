@@ -125,46 +125,5 @@ def upload():
 
 @app.route("/", methods=["GET", "POST"])
 def home():
-    if request.method == "POST":
-        # check if the post request has the file part
-        if "file" not in request.files:
-            flash("No file part")
-            return redirect(request.url)
-        file = request.files["file"]
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
-        if not file.filename:
-            flash("No selected file")
-            return redirect(request.url)
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-            return """
-            <!doctype html>
-            <title>Thanks!</title>
-            <body>
-            <h1>Thanks!</h1>
-            </body>
-            """
-    return """
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form method=post enctype=multipart/form-data>
-      <input type=file name=file>
-      <input type=submit value=Upload>
-    </form>
-    """
+    return 'whats up dog'
 
-#    app.run(host="127.0.0.1", port=8089, debug=False)
-#
-#
-#def sync(source_storage: Storage, destination_storage: Storage) -> None:
-#    pass
-#
-#
-#if __name__ == "__main__":
-#    try:
-#        main()
-#    except S3Error as exc:
-#        print("error occurred.", exc)
