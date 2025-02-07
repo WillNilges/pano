@@ -14,7 +14,7 @@ import shutil
 from flask import Flask, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 
-from jwt_token_auth import token_required
+from jwt_token_auth import check_token, token_required
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
@@ -42,11 +42,23 @@ def get_all_images(category):
     j = jsonify(pano.get_all_images(ImageCategory[category]))
     return j, 200
 
-
+# Any other route requires auth.
+@app.route("/api/v1/install/<install_number>")
 @app.route("/api/v1/install/<install_number>/<category>")
-def get_images_for_install_number(install_number: int, category: str):
+def get_images_for_install_number(install_number: int, category: str | None = None):
+    # Check the token if trying to access anything except panoramas
+    if category != "panorama":
+        token_check_result = check_token(request.values.get("token"))
+        if token_check_result:
+            return token_check_result
+
     try:
-        j = jsonify(pano.get_images(install_number=int(install_number), category=ImageCategory[category]))
+        j = jsonify(
+            pano.get_images(
+                install_number=int(install_number),
+                category=ImageCategory[category] if category else None,
+            )
+        )
         return j, 200
     except ValueError:
         error = f"Install number {install_number} is not an integer."

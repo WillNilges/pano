@@ -12,9 +12,10 @@ from tests.test_pano import SAMPLE_IMAGE_PATH
 
 class TestStorageMinio(unittest.TestCase):
     bucket_name = "test-bucket"
+
     def setUp(self):
         self.storage = StorageMinio(self.bucket_name)
-        
+
         found = self.storage.client.bucket_exists(self.bucket_name)
         if not found:
             self.storage.client.make_bucket(self.bucket_name)

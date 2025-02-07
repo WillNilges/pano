@@ -28,7 +28,9 @@ class PanoDB:
             logging.warning(f"Could not find image with id {id}")
             return None
 
-    def get_images(self, install_number: int | None=None, category: ImageCategory | None=None) -> list[Image]:
+    def get_images(
+        self, install_number: int | None = None, category: ImageCategory | None = None
+    ) -> list[Image]:
         images = []
         with Session(self.engine, expire_on_commit=False) as session:
             statement = select(Image)
