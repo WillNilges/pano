@@ -43,10 +43,15 @@ def get_all_images(category):
     return j, 200
 
 
-@app.route("/api/v1/install/<install_number>")
-def get_images_for_install_number(install_number: int):
-    j = jsonify(pano.get_images(install_number=install_number))
-    return j, 200
+@app.route("/api/v1/install/<install_number>/<category>")
+def get_images_for_install_number(install_number: int, category: str):
+    try:
+        j = jsonify(pano.get_images(install_number=int(install_number), category=ImageCategory[category]))
+        return j, 200
+    except ValueError:
+        error = f"Install number {install_number} is not an integer."
+        logging.exception(error)
+        return {"detail": error}, 400
 
 
 @app.route("/api/v1/upload", methods=["POST"])

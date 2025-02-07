@@ -40,15 +40,13 @@ class Pano:
             serialized_images[image.install_number].append(i)
         return serialized_images
 
-    def get_images(self, install_number: int) -> list[dict]:
-        images = self.db.get_images(install_number=install_number)
+    def get_images(self, install_number: int, category: ImageCategory | None=None) -> list[dict]:
+        images = self.db.get_images(install_number=install_number, category=category)
         serialized_images = []
         for image in images:
             i = dataclasses.asdict(image)
             i["url"] = image.get_object_url()
             serialized_images.append(i)
-
-        print(serialized_images)
 
         return serialized_images
 

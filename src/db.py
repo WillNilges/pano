@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from models.base import Base
-from models.image import Image
+from models.image import Image, ImageCategory
 
 
 class PanoDB:
@@ -28,13 +28,14 @@ class PanoDB:
             logging.warning(f"Could not find image with id {id}")
             return None
 
-    def get_images(self, install_number: int | None = None) -> list[Image]:
+    def get_images(self, install_number: int | None=None, category: ImageCategory | None=None) -> list[Image]:
         images = []
         with Session(self.engine, expire_on_commit=False) as session:
+            statement = select(Image)
             if install_number:
-                statement = select(Image).filter_by(install_number=int(install_number))
-            else:
-                statement = select(Image)
+                statement = statement.filter_by(install_number=int(install_number))
+            if category:
+                statement = statement.filter_by(category=category)
             rows = session.execute(statement).fetchall()
             if rows:
                 # FIXME: This is probably the wrong way to get this data
