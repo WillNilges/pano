@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import dataclasses
 from datetime import datetime
 import logging
 from pathlib import PurePosixPath
@@ -54,7 +55,7 @@ class Image(Base):
         self.order = -1
 
         # Store a signature for the image
-        self.signature = self.get_image_signature(path) 
+        self.signature = self.get_image_signature(path)
 
         # Save the original filename.
         basename = PurePosixPath(path).name
@@ -81,3 +82,10 @@ class Image(Base):
         except Exception as e:
             logging.exception("Failed to get signature.")
             raise e
+
+    # FIXME (wdn): I'm sure there's a better way to do this. I just want to return
+    # an Image as a dictionary and add a url to it
+    def dict_with_url(self):
+        i = dataclasses.asdict(self)
+        i["url"] = self.get_object_url()
+        return i

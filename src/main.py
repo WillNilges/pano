@@ -1,3 +1,4 @@
+import uuid
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from minio.error import S3Error
@@ -42,13 +43,14 @@ def get_all_images(category):
     j = jsonify(pano.get_all_images(ImageCategory[category]))
     return j, 200
 
+
 # Any other route requires auth.
 @app.route("/api/v1/install/<install_number>")
 @app.route("/api/v1/install/<install_number>/<category>")
 def get_images_for_install_number(install_number: int, category: str | None = None):
     # Check the token if trying to access anything except panoramas
     if category != "panorama":
-        token_check_result = check_token(request.values.get("token"))
+        token_check_result = check_token(request.headers.get("token"))
         if token_check_result:
             return token_check_result
 
@@ -66,9 +68,32 @@ def get_images_for_install_number(install_number: int, category: str | None = No
         return {"detail": error}, 400
 
 
+@app.route("/api/v1/update", methods=["POST"])
+def update():
+    # FIXME (wdn): This token checking business is not going to fly in the long
+    # run
+    token_check_result = check_token(request.headers.get("token"))
+    if token_check_result:
+        return token_check_result
+
+    id = request.values.get("id")
+    new_install_number = request.values.get("new_install_number")
+    new_category = request.values.get("new_category")
+    image = pano.update_image(
+        uuid.UUID(id),
+        int(new_install_number) if new_install_number else None,
+        ImageCategory[new_category.lower()] if new_category else None,
+        None, # TODO (wdn): Allow users to update the image itself
+    )
+    return jsonify(image), 200
+
+
 @app.route("/api/v1/upload", methods=["POST"])
-@token_required
 def upload():
+    token_check_result = check_token(request.headers.get("token"))
+    if token_check_result:
+        return token_check_result
+
     logging.info("Received upload request.")
     if "installNumber" not in request.values:
         logging.error("Bad Request! Missing Install # from header.")

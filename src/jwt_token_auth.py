@@ -3,6 +3,7 @@ import logging
 import jwt
 from flask import jsonify, request
 
+
 def check_token(token: str | None):
     if not token:
         logging.exception("Token is missing")
@@ -18,9 +19,10 @@ def check_token(token: str | None):
 
     return None
 
+
 def token_required(f):
     def decorated(*args, **kwargs):
-        token = request.values.get("token")
+        token = request.headers.get("token")
         token_check_result = check_token(token)
         if token_check_result:
             return token_check_result
@@ -28,5 +30,3 @@ def token_required(f):
         return f(*args, **kwargs)
 
     return decorated
-
-

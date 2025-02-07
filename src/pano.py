@@ -54,7 +54,13 @@ class Pano:
         return serialized_images
 
     # TODO: How to update order?
-    def update_image(self, id: uuid.UUID, new_install_number: Optional[int], new_category: Optional[ImageCategory], file_path: Optional[str]):
+    def update_image(
+        self,
+        id: uuid.UUID,
+        new_install_number: Optional[int],
+        new_category: Optional[ImageCategory],
+        file_path: Optional[str],
+    ):
         """
         Allows us to update details about an image, or change the image itself.
         Requires a uuid to identify the image.
@@ -91,7 +97,7 @@ class Pano:
         # If all of that worked, save the image.
         self.db.save_image(image)
 
-        return image
+        return image.dict_with_url()
 
     def handle_upload(
         self, install_number: int, file_path: str, bypass_dupe_protection: bool = False
@@ -111,9 +117,7 @@ class Pano:
 
         # Check the images for possible duplicates.
         if not bypass_dupe_protection:
-            possible_duplicates = self.detect_duplicates(
-                install_number, image_object
-            )
+            possible_duplicates = self.detect_duplicates(install_number, image_object)
             if possible_duplicates:
                 return possible_duplicates
 

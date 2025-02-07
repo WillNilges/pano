@@ -70,7 +70,7 @@ class StorageMinio(Storage):
 
         return objects
 
-    def stat_object(self, object: str) -> bool:
+    def object_exists(self, object: str) -> bool:
         result = self.client.stat_object(self.bucket, object)
         if result:
             return True
