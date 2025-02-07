@@ -70,6 +70,12 @@ class StorageMinio(Storage):
 
         return objects
 
+    def stat_object(self, object: str) -> bool:
+        result = self.client.stat_object(self.bucket, object)
+        if result:
+            return True
+        return False
+
     @staticmethod
     def get_object_path(install_number: int, id: uuid.UUID) -> str:
         return f"{install_number}/{id}"

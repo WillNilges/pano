@@ -54,14 +54,7 @@ class Image(Base):
         self.order = -1
 
         # Store a signature for the image
-        sig = WandImage(filename=path).signature
-        if sig:
-            try:
-                # Not sure why, but my linter complains unless I hard cast this to str.
-                self.signature = str(sig)
-            except ValueError as e:
-                logging.exception("Could not get signature for image")
-                raise e
+        self.signature = self.get_image_signature(path) 
 
         # Save the original filename.
         basename = PurePosixPath(path).name
@@ -78,5 +71,13 @@ class Image(Base):
     def get_object_url(self):
         return f"{'https://' if MINIO_SECURE else 'http://'}{MINIO_URL}/{MINIO_BUCKET}/{self.get_object_path()}"
 
-    # def __repr__(self) -> str:
-    #    return f"Image(id={self.id}, timestamp={self.timestamp}, install_number={self.install_number}, order={self.order}, category={self.category})"
+    def get_image_signature(self, path: str) -> str:
+        try:
+            sig = WandImage(filename=path).signature
+            if sig:
+                # Not sure why, but my linter complains unless I hard cast this to str.
+                return str(sig)
+            raise ValueError("Signature for image was None")
+        except Exception as e:
+            logging.exception("Failed to get signature.")
+            raise e

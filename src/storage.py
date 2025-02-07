@@ -21,3 +21,7 @@ class Storage(ABC):
     @abstractmethod
     def list_all_objects(self, install_number: int) -> list[str]:
         pass
+
+    @abstractmethod
+    def object_exists(self, object) -> bool:
+        pass

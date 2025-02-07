@@ -44,3 +44,8 @@ class PanoDB:
                 for r in rows:
                     images.append(r[0])
         return images
+
+    def save_image(self, image: Image):
+        with Session(self.engine, expire_on_commit=False) as session:
+            session.add(image)
+            session.commit()
