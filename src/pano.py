@@ -86,6 +86,7 @@ class Pano:
             image.category = new_category
 
         if file_path:
+            image.original_filename = PurePosixPath(file_path).name 
             image.signature = image.get_image_signature(file_path)
 
             try:

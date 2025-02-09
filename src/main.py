@@ -37,7 +37,31 @@ app.config["SECRET_KEY"] = "chomskz"
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def validate_and_save_file_locally(file) -> str:
+    # If the user does not select a file, the browser submits an
+    # empty file without a filename.
+    if not file.filename:
+        raise ValueError("File has no filename")
 
+    if not file:
+        raise FileNotFoundError("Received no file")
+
+    if not allowed_file(file.filename):
+        raise ValueError("File type not allowed.")
+
+    # Sanitize input
+    filename = secure_filename(file.filename)
+    # Ensure that the upload directory exists
+    try:
+        os.makedirs(UPLOAD_DIRECTORY)
+    except:
+        pass
+    # Save the file to local storage
+    file_path = os.path.join(UPLOAD_DIRECTORY, filename)
+    file.save(file_path)
+    return file_path
+
+# Lists all images from all install numbers of a category
 @app.route("/api/v1/<category>")
 def get_all_images(category):
     j = jsonify(pano.get_all_images(ImageCategory[category]))
@@ -79,11 +103,19 @@ def update():
     id = request.values.get("id")
     new_install_number = request.values.get("new_install_number")
     new_category = request.values.get("new_category")
+
+    # Check if he wants us to change the file.
+    dropzone_files = request.files.getlist("dropzoneImages[]")
+    path = None
+    if dropzone_files:
+        file = dropzone_files[0]
+        path = validate_and_save_file_locally(file)
+
     image = pano.update_image(
         uuid.UUID(id),
         int(new_install_number) if new_install_number else None,
         ImageCategory[new_category.lower()] if new_category else None,
-        None, # TODO (wdn): Allow users to update the image itself
+        path,
     )
     return jsonify(image), 200
 
@@ -131,41 +163,51 @@ def upload():
         # If the user does not select a file, the browser submits an
         # empty file without a filename.
         if not file.filename:
-            logging.error("No filename?")
+            logging.error("File has no filename")
             return {"detail": "File has no filename"}, 400
-        if file and allowed_file(file.filename):
-            # Sanitize input
-            filename = secure_filename(file.filename)
-            # Ensure that the upload directory exists
-            try:
-                os.makedirs(UPLOAD_DIRECTORY)
-            except:
-                pass
-            # Save the file to local storage
-            file_path = os.path.join(UPLOAD_DIRECTORY, filename)
-            file.save(file_path)
 
-            # Try to upload it to S3 and save it in MeshDB
-            try:
-                d = pano.handle_upload(
-                    install_number, file_path, bypass_dupe_protection
-                )
+        if not file:
+            error = "Got no file?"
+            logging.error(error)
+            return {"detail": error}, 400
 
-                # If duplicates were found from that upload, then don't do
-                # anything else and keep chekcing for more.
-                if d:
-                    possible_duplicates.update(d)
-                    continue
-            except ValueError as e:
-                logging.exception(
-                    "Something went wrong processing this panorama upload"
-                )
-                return {
-                    "detail": "Something went wrong processing this panorama upload"
-                }, 400
-            except pymeshdb.exceptions.BadRequestException:
-                logging.exception("Problem communicating with MeshDB.")
-                return {"detail": "There was a problem communicating with MeshDB."}, 500
+        if not allowed_file(file.filename):
+            error = "File type not allowed."
+            logging.error(error)
+            return {"detail": error}, 400
+
+        # Sanitize input
+        filename = secure_filename(file.filename)
+        # Ensure that the upload directory exists
+        try:
+            os.makedirs(UPLOAD_DIRECTORY)
+        except:
+            pass
+        # Save the file to local storage
+        file_path = os.path.join(UPLOAD_DIRECTORY, filename)
+        file.save(file_path)
+
+        # Try to upload it to S3 and save it in MeshDB
+        try:
+            d = pano.handle_upload(
+                install_number, file_path, bypass_dupe_protection
+            )
+
+            # If duplicates were found from that upload, then don't do
+            # anything else and keep chekcing for more.
+            if d:
+                possible_duplicates.update(d)
+                continue
+        except ValueError as e:
+            logging.exception(
+                "Something went wrong processing this panorama upload"
+            )
+            return {
+                "detail": "Something went wrong processing this panorama upload"
+            }, 400
+        except pymeshdb.exceptions.BadRequestException:
+            logging.exception("Problem communicating with MeshDB.")
+            return {"detail": "There was a problem communicating with MeshDB."}, 500
 
     # Clean up working directory
     shutil.rmtree(WORKING_DIRECTORY)
