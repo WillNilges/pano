@@ -12,7 +12,7 @@ log = logging.getLogger("pano.storage_minio")
 
 
 class StorageMinio(Storage):
-    def __init__(self, bucket: str=MINIO_BUCKET) -> None:
+    def __init__(self, bucket: str = MINIO_BUCKET) -> None:
         log.info("Configuring Minio Storage...")
         # Get env vars like this so that we crash if they're missing
         minio_url = MINIO_URL
@@ -69,6 +69,12 @@ class StorageMinio(Storage):
             objects.append(o.object_name)
 
         return objects
+
+    def object_exists(self, object: str) -> bool:
+        result = self.client.stat_object(self.bucket, object)
+        if result:
+            return True
+        return False
 
     @staticmethod
     def get_object_path(install_number: int, id: uuid.UUID) -> str:

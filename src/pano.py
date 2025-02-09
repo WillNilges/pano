@@ -3,6 +3,7 @@ import logging
 import os
 from pathlib import PurePosixPath
 import re
+from typing import Optional
 import uuid
 
 from sqlalchemy import create_engine, select
@@ -40,19 +41,64 @@ class Pano:
             serialized_images[image.install_number].append(i)
         return serialized_images
 
-    def get_images(self, install_number: int) -> list[dict]:
-        images = self.db.get_images(install_number=install_number)
+    def get_images(
+        self, install_number: int, category: ImageCategory | None = None
+    ) -> list[dict]:
+        images = self.db.get_images(install_number=install_number, category=category)
         serialized_images = []
         for image in images:
             i = dataclasses.asdict(image)
             i["url"] = image.get_object_url()
             serialized_images.append(i)
 
-        print(serialized_images)
-
         return serialized_images
 
-    # Mocking some kind of upload portal with an array of strings
+    # TODO: How to update order?
+    def update_image(
+        self,
+        id: uuid.UUID,
+        new_install_number: Optional[int],
+        new_category: Optional[ImageCategory],
+        file_path: Optional[str],
+    ):
+        """
+        Allows us to update details about an image, or change the image itself.
+        Requires a uuid to identify the image.
+        Optional new_install_number
+        Optional new_category
+        Pass a new file path to update the image itself.
+        """
+
+        image = self.db.get_image(id)
+
+        if not image:
+            raise ValueError(f"[db] Could not find image with id {id}")
+
+        # Sanity check that the image exists. This should never fail
+        if not self.storage.object_exists(image.get_object_path()):
+            raise ValueError(f"[storage] Could not find image object with id {id}")
+
+        # Update details if necessary
+        if new_install_number:
+            image.install_number = new_install_number
+
+        if new_category:
+            image.category = new_category
+
+        if file_path:
+            image.signature = image.get_image_signature(file_path)
+
+            try:
+                self.storage.upload_objects({image.get_object_path(): file_path})
+            except Exception as e:
+                logging.exception("Failed to upload object to S3.")
+                raise e
+
+        # If all of that worked, save the image.
+        self.db.save_image(image)
+
+        return image.dict_with_url()
+
     def handle_upload(
         self, install_number: int, file_path: str, bypass_dupe_protection: bool = False
     ) -> dict[str, str] | None:
@@ -62,32 +108,27 @@ class Pano:
         if not building:
             raise ValueError("Could not find a building associated with that Install #")
 
-        with Session(self.db.engine, expire_on_commit=False) as session:
-            # Create a DB object
-            image_object = Image(
-                path=file_path,
-                install_number=install_number,
-                category=ImageCategory.uncategorized,
-            )
+        # Create a DB object
+        image_object = Image(
+            path=file_path,
+            install_number=install_number,
+            category=ImageCategory.uncategorized,
+        )
 
-            # Check the images for possible duplicates.
-            if not bypass_dupe_protection:
-                possible_duplicates = self.detect_duplicates(
-                    install_number, image_object
-                )
-                if possible_duplicates:
-                    return possible_duplicates
+        # Check the images for possible duplicates.
+        if not bypass_dupe_protection:
+            possible_duplicates = self.detect_duplicates(install_number, image_object)
+            if possible_duplicates:
+                return possible_duplicates
 
-            # Upload object to S3
-            try:
-                self.storage.upload_objects({image_object.get_object_path(): file_path})
-            except Exception as e:
-                logging.exception("Failed to upload object to S3.")
-                raise e
+        # Upload object to S3
+        try:
+            self.storage.upload_objects({image_object.get_object_path(): file_path})
+        except Exception as e:
+            logging.exception("Failed to upload object to S3.")
+            raise e
 
-            # If successful, save image object to DB
-            session.add(image_object)
-            session.commit()
+        self.db.save_image(image_object)
 
     def detect_duplicates(
         self, install_number: int, uploaded_image: Image
