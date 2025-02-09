@@ -160,32 +160,7 @@ def upload():
     possible_duplicates = {}
 
     for file in dropzone_files:
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
-        if not file.filename:
-            logging.error("File has no filename")
-            return {"detail": "File has no filename"}, 400
-
-        if not file:
-            error = "Got no file?"
-            logging.error(error)
-            return {"detail": error}, 400
-
-        if not allowed_file(file.filename):
-            error = "File type not allowed."
-            logging.error(error)
-            return {"detail": error}, 400
-
-        # Sanitize input
-        filename = secure_filename(file.filename)
-        # Ensure that the upload directory exists
-        try:
-            os.makedirs(UPLOAD_DIRECTORY)
-        except:
-            pass
-        # Save the file to local storage
-        file_path = os.path.join(UPLOAD_DIRECTORY, filename)
-        file.save(file_path)
+        file_path = validate_and_save_file_locally(file)
 
         # Try to upload it to S3 and save it in MeshDB
         try:
