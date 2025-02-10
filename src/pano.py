@@ -16,6 +16,10 @@ from models.image import Image, ImageCategory
 from storage import Storage
 from storage_minio import StorageMinio
 
+@dataclasses.dataclass
+class PossibleDuplicate():
+    uploaded_file: dict
+    existing_file: dict
 
 class Pano:
     def __init__(
@@ -102,7 +106,7 @@ class Pano:
 
     def handle_upload(
         self, install_number: int, file_path: str, bypass_dupe_protection: bool = False
-    ) -> dict[str, str] | None:
+    ) -> list[PossibleDuplicate] | None:
         building = self.meshdb.get_primary_building_for_install(install_number)
         # TODO: Distinguish between the server erroring, and getting passed a
         # bad install #
@@ -133,20 +137,24 @@ class Pano:
 
     def detect_duplicates(
         self, install_number: int, uploaded_image: Image
-    ) -> dict[str, str]:
+    ) -> list[PossibleDuplicate]:
         """
         Uses ImageMagick to check the hash of the files uploaded against photos
         that already exist under an install. If a photo matches, the path is returned
         in the list.
         """
 
-        possible_duplicates = {}
+        possible_duplicates = []
 
         # Get any images we already uploaded for this install
         images = self.db.get_images(install_number)
+
+        # Check each image
         for i in images:
+            # If we find one that matches...
             if uploaded_image.signature in i.signature:
-                possible_duplicates[i.original_filename] = i.get_object_url()
+                # Pair the uploaded file with the existing one and send the whole thing back.
+                possible_duplicates.append(PossibleDuplicate(uploaded_file=uploaded_image.dict_with_url(), existing_file=i.dict_with_url()))
                 logging.warning(
                     f"Got possible duplicate. Uploaded file '{uploaded_image.original_filename}' looks like existing file '{i.original_filename}' (Signature matches: {i.signature})"
                 )

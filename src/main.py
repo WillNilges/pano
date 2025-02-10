@@ -6,7 +6,7 @@ import logging
 
 import pymeshdb
 from models.image import ImageCategory
-from pano import Pano
+from pano import Pano, PossibleDuplicate
 from settings import UPLOAD_DIRECTORY, WORKING_DIRECTORY
 from storage import Storage
 
@@ -157,7 +157,7 @@ def upload():
     # We're gonna check each file for dupes. If we find a dupe, we keep track
     # of it and bail back to the client, changing nothing except for temp storage
     # until we get a confirmation.
-    possible_duplicates = {}
+    possible_duplicates: list[PossibleDuplicate] = []
 
     for file in dropzone_files:
         file_path = validate_and_save_file_locally(file)
@@ -171,7 +171,7 @@ def upload():
             # If duplicates were found from that upload, then don't do
             # anything else and keep chekcing for more.
             if d:
-                possible_duplicates.update(d)
+                possible_duplicates.extend(d)
                 continue
         except ValueError as e:
             logging.exception(
@@ -189,7 +189,7 @@ def upload():
     os.makedirs(WORKING_DIRECTORY)
 
     if possible_duplicates:
-        return possible_duplicates, 409
+        return jsonify({"possible_duplicates": possible_duplicates}), 409
 
     return "", 201
 
