@@ -91,6 +91,13 @@ def get_images_for_install_number(install_number: int, category: str | None = No
         logging.exception(error)
         return {"detail": error}, 400
 
+@app.route("/api/v1/image/<id>")
+def get_image_by_id(id: str):
+    image = pano.db.get_image(uuid.UUID(id))
+    if not image:
+        return {"detail": "Image not found"}, 404
+    return image.dict_with_url(), 200
+
 
 @app.route("/api/v1/update", methods=["POST"])
 def update():

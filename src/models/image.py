@@ -33,6 +33,7 @@ class Image(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     install_number: Mapped[int] = mapped_column()
+    #network_number: Mapped[int] = mapped_column() # TODO (wdn): Make this and install_number mutually exclusive
     category: Mapped[ImageCategory] = mapped_column()
     order: Mapped[int] = mapped_column()
     # The hash of the image generated from ImageMagick
