@@ -2,6 +2,11 @@
 
 A dummy-simple API in front of MinIO for storing and accessing panoramas in MeshDB.
 
+<p align="center">
+  <img height="300px" src="https://github.com/user-attachments/assets/692fabb1-4b7c-4392-9731-604ebdf95af1" alt="Oxford the Grabbit">
+</p>
+
+
 # Schema
 
 Pano keeps track of Images in Postgres. An Image has a uuid, a timestamp,
