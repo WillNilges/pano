@@ -1,3 +1,14 @@
+# uv (optional)
+
+uv is an all-in-one Python environment manager.
+Our current configuration permits, but does not require, the use of uv.
+
+## Run a Python shell in the project
+
+```
+uv run python
+```
+
 # Service dependencies via Docker Compose
 
 Pano depends on service dependencies Postgres and MinIO.
