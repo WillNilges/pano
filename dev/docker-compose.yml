@@ -1,0 +1,36 @@
+name: pano-dev
+services:
+  postgres:
+    container_name: pano-postgres
+    image: docker.io/postgres:15-bookworm
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: pano-dev
+      POSTGRES_USER: pano-dev
+      POSTGRES_PASSWORD: pano-dev
+    volumes:
+      - pano-dev-postgres-data:/var/lib/postgresql/data
+    networks:
+      - pano-dev-network
+  minio:
+    container_name: pano-minio
+    image: quay.io/minio/minio
+    ports:
+      - 9000:9000
+      - 9001:9001
+    environment:
+      MINIO_ROOT_USER: pano-dev
+      MINIO_ROOT_PASSWORD: pano-dev
+    volumes:
+      - pano-dev-minio-data:/data
+    networks:
+      - pano-dev-network
+volumes:
+  pano-dev-postgres-data:
+    name: pano-postgres-data
+  pano-dev-minio-data:
+    name: pano-minio-data
+networks:
+  pano-dev-network:
+    name: pano-dev-network
