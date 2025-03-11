@@ -2,10 +2,13 @@
 
 uv is an all-in-one Python environment manager.
 Our current configuration permits, but does not require, the use of uv.
+To use uv, prefix Python-related commands with:
 
-If you're not using uv, replace `uv run` with however you use your virtualenv, and the rest should stay the same.
+```
+uv run
+```
 
-## Run a Python shell in the project
+For example:
 
 ```
 uv run python
@@ -22,7 +25,7 @@ For your convenience, we provide a Docker Compose configuration that contains al
 docker compose --file ./dev/docker-compose.yml up --detach
 ```
 
-## Stopping all service dependencies
+## Stop all service dependencies
 
 ```
 docker compose --file ./dev/docker-compose.yml down
@@ -30,8 +33,8 @@ docker compose --file ./dev/docker-compose.yml down
 
 # Automated tests
 
-## Running unit tests
+## Run unit tests
 
 ```
-uv run pytest tests/unit/
+pytest tests/unit/
 ```
