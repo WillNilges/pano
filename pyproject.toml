@@ -24,3 +24,12 @@ dev = [
     "isort==5.12.*",
     "pytest==8.3.*",
 ]
+
+# uv does not respect the above optional deps and only works with these dev deps.
+# TODO (ming): Do we need to duplicate? Can we keep only this one?
+[dependency-groups]
+dev = [
+    "black==23.7.*",
+    "isort==5.12.*",
+    "pytest==8.3.*",
+]
