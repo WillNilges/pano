@@ -14,6 +14,26 @@ For example:
 uv run python
 ```
 
+# PYTHONPATH
+
+As a short-term workaround, set `PYTHONPATH` manually:
+
+```
+export PYTHONPATH=./src/
+```
+
+# Run the web server
+
+```
+flask --app main.app run
+```
+
+or
+
+```
+gunicorn -w 4 'main:app'
+```
+
 # Service dependencies via Docker Compose
 
 Pano depends on service dependencies Postgres and MinIO.
