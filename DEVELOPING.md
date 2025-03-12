@@ -1,4 +1,9 @@
-# uv (optional)
+# virtualenv
+
+You should use a virtualenv, through your preferred version management tool,
+for example pyenv or uv.
+
+## uv (optional)
 
 uv is an all-in-one Python environment manager.
 Our current configuration permits, but does not require, the use of uv.
@@ -14,12 +19,19 @@ For example:
 uv run python
 ```
 
-# PYTHONPATH
+# Install this package as editable
 
-As a short-term workaround, set `PYTHONPATH` manually:
+## uv
 
 ```
-export PYTHONPATH=./src/
+uv pip install --editable .
+```
+
+## virtualenv (no uv)
+
+```
+source .venv/bin/activate
+pip install --editable .
 ```
 
 # Run the web server
