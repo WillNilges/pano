@@ -1,3 +1,7 @@
+# Python
+
+This project uses `A | B` syntax for type unions in type annotations, which requires Python 3.10+.
+
 # Native deps
 
 Some Python packages assume that corresponding native dependencies are already present.
