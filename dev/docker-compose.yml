@@ -16,6 +16,8 @@ services:
   minio:
     container_name: pano-minio
     image: quay.io/minio/minio
+    command: |
+      server /data --console-address ":9001"
     ports:
       - 9000:9000
       - 9001:9001
