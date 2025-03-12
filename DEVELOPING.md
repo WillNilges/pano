@@ -1,3 +1,13 @@
+# Native deps
+
+Some Python packages assume that corresponding native dependencies are already present.
+
+## MacOS
+
+```
+brew install freetype imagemagick
+```
+
 # virtualenv
 
 You should use a virtualenv, through your preferred version management tool,
