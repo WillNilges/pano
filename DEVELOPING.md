@@ -38,14 +38,14 @@ uv run python
 ## uv
 
 ```
-uv pip install --editable .\[dev\]
+uv pip install --editable '.[dev]'
 ```
 
 ## virtualenv (no uv)
 
 ```
 source .venv/bin/activate
-pip install --editable .\[dev\]
+pip install --editable '.[dev]'
 ```
 
 # Run the web server
