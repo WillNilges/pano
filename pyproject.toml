@@ -1,6 +1,7 @@
 [project]
 name = "pano"
 version = "0.0.1"
+requires-python = ">=3.10"
 
 dependencies = [
 	"minio==7.2.*",
@@ -19,6 +20,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dev = [
+    "black==23.7.*",
+    "isort==5.12.*",
+    "pytest==8.3.*",
+]
+
+# uv does not respect the above optional deps and only works with these dev deps.
+# TODO (ming): Do we need to duplicate? Can we keep only this one?
+[dependency-groups]
 dev = [
     "black==23.7.*",
     "isort==5.12.*",
