@@ -8,6 +8,7 @@ import pymeshdb
 from models.image import ImageCategory
 from pano import Pano
 from settings import UPLOAD_DIRECTORY, WORKING_DIRECTORY
+from src.models.user import User
 from storage import Storage
 
 import os
@@ -18,6 +19,15 @@ from werkzeug.utils import secure_filename
 from jwt_token_auth import check_token, token_required
 
 from authlib.integrations.flask_client import OAuth
+
+
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
@@ -34,6 +44,25 @@ CORS(app)  # This will enable CORS for all routes
 app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1000 * 1000
 app.config["SECRET_KEY"] = "chomskz"
+
+
+# Authlib
+oauth = OAuth(app)
+
+# Register google outh
+CONF_URL = "https://accounts.google.com/.well-known/openid-configuration"  # provide us with common metadata configurations
+google = oauth.register(
+    name="google",
+    server_metadata_url=CONF_URL,
+    # Collect client_id and client secret from google auth api
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    client_kwargs={"scope": "openid email profile"},
+)
+
+# User session management setup
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 
 def allowed_file(filename):
@@ -184,24 +213,8 @@ def home():
     return "whats up dog"
 
 
-# Authlib
-oauth = OAuth(app)
-
-# Register google outh
-
-CONF_URL = "https://accounts.google.com/.well-known/openid-configuration"  # provide us with common metadata configurations
-google = oauth.register(
-    name="google",
-    server_metadata_url=CONF_URL,
-    # Collect client_id and client secret from google auth api
-    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
-    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
-    client_kwargs={"scope": "openid email profile"},
-)
-
-
 # Routes for login
-@app.route("/google-login")
+@app.route("/login/google")
 def googleLogin():
     redirect_uri = url_for("authorize", _external=True)
     google = oauth.create_client("google")
@@ -212,7 +225,32 @@ def googleLogin():
 def authorize():
     token = oauth.google.authorize_access_token()
     user = token["userinfo"]
-    # user will return a dict of info like: email = user.get("email")
-    # Save the user info to database and login the user
-    print(f"hello {user}")
-    return "", 200
+    if not user.get("email_verified"):
+        logging.warning("User has not verified email.")
+        return "Please verify your email before using Pano.", 400
+
+    # "sub" is unique id
+    unique_id = user.get("sub")
+    user_name = user.get("name")
+    user_email = user.get("email")
+
+    # Create a user in your db with the information provided
+    # by Google
+    user = User(id=unique_id, name=user_name, email_address=user_email)
+
+    # Doesn't exist? Add it to the database.
+    if not User.get(unique_id):
+        User.create(unique_id, user_name, user_email)
+
+    # Begin user session by logging the user in
+    login_user(user)
+
+    # Send user back to homepage
+    return redirect(url_for("/"))
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("index"))
+
