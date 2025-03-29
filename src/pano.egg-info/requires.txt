@@ -1,0 +1,19 @@
+minio==7.2.*
+PyGithub==2.3.*
+python-dotenv==1.0.*
+GitPython==3.1.*
+pymeshdb@ git+https://github.com/willnilges/pymeshdb.git
+dropbox==12.0.*
+Flask==3.0.*
+Flask-Cors==5.0.*
+Wand==0.6.*
+SQLAlchemy==2.0.*
+psycopg[binary,pool]==3.2.*
+gunicorn==23.0.*
+PyJWT==2.10.*
+authlib==1.5.*
+
+[dev]
+black==23.7.*
+isort==5.12.*
+pytest==8.3.*

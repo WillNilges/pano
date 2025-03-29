@@ -1,5 +1,5 @@
 import uuid
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 from minio.error import S3Error
 import logging
@@ -16,6 +16,8 @@ from flask import Flask, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 
 from jwt_token_auth import check_token, token_required
+
+from authlib.integrations.flask_client import OAuth
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
@@ -83,7 +85,7 @@ def update():
         uuid.UUID(id),
         int(new_install_number) if new_install_number else None,
         ImageCategory[new_category.lower()] if new_category else None,
-        None, # TODO (wdn): Allow users to update the image itself
+        None,  # TODO (wdn): Allow users to update the image itself
     )
     return jsonify(image), 200
 
@@ -180,3 +182,37 @@ def upload():
 @app.route("/", methods=["GET", "POST"])
 def home():
     return "whats up dog"
+
+
+# Authlib
+oauth = OAuth(app)
+
+# Register google outh
+
+CONF_URL = "https://accounts.google.com/.well-known/openid-configuration"  # provide us with common metadata configurations
+google = oauth.register(
+    name="google",
+    server_metadata_url=CONF_URL,
+    # Collect client_id and client secret from google auth api
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    client_kwargs={"scope": "openid email profile"},
+)
+
+
+# Routes for login
+@app.route("/google-login")
+def googleLogin():
+    redirect_uri = url_for("authorize", _external=True)
+    google = oauth.create_client("google")
+    return google.authorize_redirect(redirect_uri)
+
+
+@app.route("/authorize")
+def authorize():
+    token = oauth.google.authorize_access_token()
+    user = token["userinfo"]
+    # user will return a dict of info like: email = user.get("email")
+    # Save the user info to database and login the user
+    print(f"hello {user}")
+    return "", 200
