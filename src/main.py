@@ -210,7 +210,7 @@ def upload():
 
 @app.route("/", methods=["GET", "POST"])
 def home():
-    return "whats up dog"
+    return "whats up dog (<a href='/login/google'>click here to login</a>)"
 
 
 # Routes for login
@@ -236,17 +236,18 @@ def authorize():
 
     # Create a user in your db with the information provided
     # by Google
-    user = User(id=unique_id, name=user_name, email_address=user_email)
+    user = User(id=unique_id, is_active=True, name=user_name, email_address=user_email)
 
     # Doesn't exist? Add it to the database.
-    if not User.get(unique_id):
-        User.create(unique_id, user_name, user_email)
+    if not pano.db.get_user(unique_id):
+        pano.db.save_user(user)
+        logging.info(f"Saved user: {user_email}")
 
     # Begin user session by logging the user in
     login_user(user)
 
     # Send user back to homepage
-    return redirect(url_for("/"))
+    return redirect("/")
 
 @app.route("/logout")
 @login_required

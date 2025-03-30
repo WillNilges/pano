@@ -19,6 +19,7 @@ dependencies = [
 	"PyJWT==2.10.*",
 	"authlib==1.5.*",
 	"Flask-Login==0.6.*",
+	"alembic==1.15.*",
 ]
 
 [project.optional-dependencies]
