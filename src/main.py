@@ -97,8 +97,8 @@ def get_images_for_install_number(install_number: int, category: str | None = No
         return {"detail": error}, 400
 
 
-@login_required
 @app.route("/api/v1/update", methods=["POST"])
+@login_required
 def update():
     # FIXME (wdn): This token checking business is not going to fly in the long
     # run
@@ -118,8 +118,8 @@ def update():
     return jsonify(image), 200
 
 
-@login_required
 @app.route("/api/v1/upload", methods=["POST"])
+@login_required
 def upload():
     #token_check_result = check_token(request.headers.get("token"))
     #if token_check_result:
