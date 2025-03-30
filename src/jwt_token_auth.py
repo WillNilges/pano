@@ -1,5 +1,6 @@
-import os
 import logging
+import os
+
 import jwt
 from flask import jsonify, request
 

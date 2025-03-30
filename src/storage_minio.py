@@ -1,13 +1,14 @@
 import logging
 import os
-from pathlib import PurePosixPath
 import uuid
+from pathlib import PurePosixPath
+
 from minio import Minio
+from wand.image import Image as WandImage
 
 from models.image import Image
 from settings import MINIO_BUCKET, MINIO_SECURE, MINIO_URL, WORKING_DIRECTORY
 from storage import Storage
-from wand.image import Image as WandImage
 
 log = logging.getLogger("pano.storage_minio")
 

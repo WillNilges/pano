@@ -1,33 +1,22 @@
-from datetime import datetime, timedelta
-import uuid
-from flask import Flask, jsonify, request, render_template
-from flask_cors import CORS
-from minio.error import S3Error
 import logging
+import os
+import shutil
+import uuid
+from datetime import timedelta
 
 import pymeshdb
+from authlib.integrations.flask_client import OAuth
+from flask import Flask, jsonify, redirect, request, url_for
+from flask_cors import CORS
+from flask_login import (LoginManager, current_user, login_required,
+                         login_user, logout_user)
+from werkzeug.exceptions import RequestEntityTooLarge
+from werkzeug.utils import secure_filename
+
 from models.image import ImageCategory
 from pano import Pano
 from settings import UPLOAD_DIRECTORY, WORKING_DIRECTORY
 from src.models.user import User
-from storage import Storage
-
-import os
-import shutil
-from flask import Flask, flash, request, redirect, url_for
-from werkzeug.utils import secure_filename
-
-from authlib.integrations.flask_client import OAuth
-from flask_cors import CORS
-
-
-from flask_login import (
-    LoginManager,
-    current_user,
-    login_required,
-    login_user,
-    logout_user,
-)
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
@@ -42,10 +31,10 @@ pano = Pano()
 app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
 app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1000 * 1000
+app.config["MAX_CONTENT_LENGTH"] = 100 * 1000 * 1000
 app.config["SECRET_KEY"] = "chomskz"
 
-CORS(app, supports_credentials=True, resources=r'/api/*')
+CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://127.0.0.1:3000"}})
 
 # Authlib
 oauth = OAuth(app)
@@ -124,6 +113,15 @@ def update():
         None,  # TODO (wdn): Allow users to update the image itself
     )
     return jsonify(image), 200
+
+@app.route('/api/v1/upload', methods=['OPTIONS'])
+@login_required
+def options():
+    return '', 200
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_large_file(error):
+    return jsonify({'error': 'File size exceeds the maximum limit of 16 MB.'}), 413
 
 
 @app.route("/api/v1/upload", methods=["POST"])

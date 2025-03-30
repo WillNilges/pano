@@ -1,16 +1,17 @@
-from dataclasses import dataclass
 import dataclasses
-from datetime import datetime
-import logging
-from pathlib import PurePosixPath
-import uuid
 import enum
+import logging
+import uuid
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import PurePosixPath
+
 from sqlalchemy import DateTime, select
 from sqlalchemy.orm import Mapped, Session, mapped_column
+from wand.image import Image as WandImage
+
 from models.base import Base
 from settings import MINIO_BUCKET, MINIO_SECURE, MINIO_URL
-
-from wand.image import Image as WandImage
 
 
 # Or should I have tags?

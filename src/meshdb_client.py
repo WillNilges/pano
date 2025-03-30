@@ -2,8 +2,8 @@ import logging
 import os
 
 import pymeshdb
-from pymeshdb.models.install import Install
 from pymeshdb.models.building import Building
+from pymeshdb.models.install import Install
 
 log = logging.getLogger("pano.meshdb_client")
 
