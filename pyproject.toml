@@ -20,6 +20,7 @@ dependencies = [
 	"authlib==1.5.*",
 	"Flask-Login==0.6.*",
 	"alembic==1.15.*",
+	"flask-cors==5.0.*",
 ]
 
 [project.optional-dependencies]

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import uuid
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
@@ -17,6 +18,7 @@ from flask import Flask, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 
 from authlib.integrations.flask_client import OAuth
+from flask_cors import CORS
 
 
 from flask_login import (
@@ -42,6 +44,8 @@ CORS(app)  # This will enable CORS for all routes
 app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1000 * 1000
 app.config["SECRET_KEY"] = "chomskz"
+
+CORS(app, supports_credentials=True)
 
 
 # Authlib
@@ -69,6 +73,11 @@ def allowed_file(filename):
 
 @app.route("/api/v1/<category>")
 def get_all_images(category):
+    try:
+        ImageCategory[category]
+    except KeyError:
+        return "Invalid image category", 400
+
     j = jsonify(pano.get_all_images(ImageCategory[category]))
     return j, 200
 
@@ -78,7 +87,7 @@ def get_all_images(category):
 @app.route("/api/v1/install/<install_number>/<category>")
 def get_images_for_install_number(install_number: int, category: str | None = None):
     # Check the token if trying to access anything except panoramas
-    #if category != "panorama":
+    # if category != "panorama":
     #    token_check_result = check_token(request.headers.get("token"))
     #    if token_check_result:
     #        return token_check_result
@@ -102,8 +111,8 @@ def get_images_for_install_number(install_number: int, category: str | None = No
 def update():
     # FIXME (wdn): This token checking business is not going to fly in the long
     # run
-    #token_check_result = check_token(request.headers.get("token"))
-    #if token_check_result:
+    # token_check_result = check_token(request.headers.get("token"))
+    # if token_check_result:
     #    return token_check_result
 
     id = request.values.get("id")
@@ -121,8 +130,8 @@ def update():
 @app.route("/api/v1/upload", methods=["POST"])
 @login_required
 def upload():
-    #token_check_result = check_token(request.headers.get("token"))
-    #if token_check_result:
+    # token_check_result = check_token(request.headers.get("token"))
+    # if token_check_result:
     #    return token_check_result
 
     logging.info("Received upload request.")
@@ -261,7 +270,7 @@ def authorize():
         logging.info(f"Saved user: {user_email}")
 
     # Begin user session by logging the user in
-    if not login_user(user):
+    if not login_user(user, remember=True, duration=timedelta(days=2)):
         return "Error ocurred while logging in", 400
 
     # Send user back to homepage

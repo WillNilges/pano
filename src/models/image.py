@@ -9,7 +9,6 @@ from sqlalchemy import DateTime, select
 from sqlalchemy.orm import Mapped, Session, mapped_column
 from models.base import Base
 from settings import MINIO_BUCKET, MINIO_SECURE, MINIO_URL
-from storage_minio import StorageMinio
 
 from wand.image import Image as WandImage
 
@@ -66,12 +65,6 @@ class Image(Base):
 
         super().__init__()
 
-    def get_object_path(self):
-        return StorageMinio.get_object_path(self.install_number, self.id)
-
-    def get_object_url(self):
-        return f"{'https://' if MINIO_SECURE else 'http://'}{MINIO_URL}/{MINIO_BUCKET}/{self.get_object_path()}"
-
     def get_image_signature(self, path: str) -> str:
         try:
             sig = WandImage(filename=path).signature
@@ -83,9 +76,5 @@ class Image(Base):
             logging.exception("Failed to get signature.")
             raise e
 
-    # FIXME (wdn): I'm sure there's a better way to do this. I just want to return
-    # an Image as a dictionary and add a url to it
-    def dict_with_url(self):
-        i = dataclasses.asdict(self)
-        i["url"] = self.get_object_url()
-        return i
+    def object_path(self):
+        return f"{self.install_number}/{self.id}"

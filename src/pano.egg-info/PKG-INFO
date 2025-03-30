@@ -17,6 +17,8 @@ Requires-Dist: gunicorn==23.0.*
 Requires-Dist: PyJWT==2.10.*
 Requires-Dist: authlib==1.5.*
 Requires-Dist: Flask-Login==0.6.*
+Requires-Dist: alembic==1.15.*
+Requires-Dist: flask-cors==5.0.*
 Provides-Extra: dev
 Requires-Dist: black==23.7.*; extra == "dev"
 Requires-Dist: isort==5.12.*; extra == "dev"

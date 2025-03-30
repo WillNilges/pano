@@ -21,11 +21,11 @@ class Pano:
     def __init__(
         self,
         meshdb: MeshdbClient = MeshdbClient(),
-        storage: Storage = StorageMinio(),
+        storage: StorageMinio = StorageMinio(),
         db: PanoDB = PanoDB(),
     ) -> None:
         self.meshdb: MeshdbClient = meshdb
-        self.storage: Storage = storage
+        self.storage: StorageMinio = storage
         self.db: PanoDB = db
 
     def get_all_images(
@@ -37,7 +37,7 @@ class Pano:
                 serialized_images[image.install_number] = []
 
             i = dataclasses.asdict(image)
-            i["url"] = image.get_object_url()
+            i["url"] = self.storage.get_presigned_url(image)
             serialized_images[image.install_number].append(i)
         return serialized_images
 
@@ -48,7 +48,7 @@ class Pano:
         serialized_images = []
         for image in images:
             i = dataclasses.asdict(image)
-            i["url"] = image.get_object_url()
+            i["url"] = self.storage.get_presigned_url(image)
             serialized_images.append(i)
 
         return serialized_images
@@ -75,7 +75,7 @@ class Pano:
             raise ValueError(f"[db] Could not find image with id {id}")
 
         # Sanity check that the image exists. This should never fail
-        if not self.storage.object_exists(image.get_object_path()):
+        if not self.storage.object_exists(image.object_path()):
             raise ValueError(f"[storage] Could not find image object with id {id}")
 
         # Update details if necessary
@@ -89,7 +89,7 @@ class Pano:
             image.signature = image.get_image_signature(file_path)
 
             try:
-                self.storage.upload_objects({image.get_object_path(): file_path})
+                self.storage.upload_objects({image.object_path(): file_path})
             except Exception as e:
                 logging.exception("Failed to upload object to S3.")
                 raise e
@@ -97,7 +97,10 @@ class Pano:
         # If all of that worked, save the image.
         self.db.save_image(image)
 
-        return image.dict_with_url()
+        image_dict = dataclasses.asdict(image)
+        image_dict["url"] = self.storage.get_presigned_url(image)
+
+        return image_dict
 
     def handle_upload(
         self, install_number: int, file_path: str, bypass_dupe_protection: bool = False
@@ -123,7 +126,7 @@ class Pano:
 
         # Upload object to S3
         try:
-            self.storage.upload_objects({image_object.get_object_path(): file_path})
+            self.storage.upload_objects({image_object.object_path(): file_path})
         except Exception as e:
             logging.exception("Failed to upload object to S3.")
             raise e
@@ -145,7 +148,9 @@ class Pano:
         images = self.db.get_images(install_number)
         for i in images:
             if uploaded_image.signature in i.signature:
-                possible_duplicates[i.original_filename] = i.get_object_url()
+                possible_duplicates[
+                    i.original_filename
+                ] = self.storage.get_presigned_url(i)
                 logging.warning(
                     f"Got possible duplicate. Uploaded file '{uploaded_image.original_filename}' looks like existing file '{i.original_filename}' (Signature matches: {i.signature})"
                 )
