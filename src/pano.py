@@ -104,7 +104,7 @@ class Pano:
 
     def handle_upload(
         self, install_number: int, file_path: str, bypass_dupe_protection: bool = False
-    ) -> dict[str, str] | None:
+    ) -> dict[str, str]:
         building = self.meshdb.get_primary_building_for_install(install_number)
         # TODO: Distinguish between the server erroring, and getting passed a
         # bad install #
@@ -132,6 +132,9 @@ class Pano:
             raise e
 
         self.db.save_image(image_object)
+
+        # Empty Dict = No Dupes; We're good.
+        return {}
 
     def detect_duplicates(
         self, install_number: int, uploaded_image: Image

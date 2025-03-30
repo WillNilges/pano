@@ -45,8 +45,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1000 * 1000
 app.config["SECRET_KEY"] = "chomskz"
 
-CORS(app, supports_credentials=True)
-
+CORS(app, supports_credentials=True, resources=r'/api/*')
 
 # Authlib
 oauth = OAuth(app)
@@ -192,7 +191,7 @@ def upload():
                 )
 
                 # If duplicates were found from that upload, then don't do
-                # anything else and keep chekcing for more.
+                # anything else and keep checking for more.
                 if d:
                     possible_duplicates.update(d)
                     continue
