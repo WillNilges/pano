@@ -99,6 +99,7 @@ def get_images_for_install_number(install_number: int, category: str | None = No
         return {"detail": error}, 400
 
 
+@login_required
 @app.route("/api/v1/update", methods=["POST"])
 def update():
     # FIXME (wdn): This token checking business is not going to fly in the long
@@ -119,6 +120,7 @@ def update():
     return jsonify(image), 200
 
 
+@login_required
 @app.route("/api/v1/upload", methods=["POST"])
 def upload():
     token_check_result = check_token(request.headers.get("token"))
@@ -210,7 +212,20 @@ def upload():
 
 @app.route("/", methods=["GET", "POST"])
 def home():
-    return "whats up dog (<a href='/login/google'>click here to login</a>)"
+    if not current_user.is_authenticated:
+        return "whats up dog (<a href='/login/google'>click here to login</a>)"
+
+    return (
+        "<p>Hello, {}! You're logged in! Email: {}</p>"
+        '<a class="button" href="/logout">Logout</a>'.format(
+            current_user.name, current_user.email_address
+        )
+    )
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return pano.db.get_user(user_id)
 
 
 # Routes for login
@@ -234,6 +249,10 @@ def authorize():
     user_name = user.get("name")
     user_email = user.get("email")
 
+    # This should be handled by Google, but might as well add a check.
+    if not "@nycmesh.net" in user_email:
+        return "You must have an NYCMesh email to use this service", 400
+
     # Create a user in your db with the information provided
     # by Google
     user = User(id=unique_id, is_active=True, name=user_name, email_address=user_email)
@@ -244,14 +263,15 @@ def authorize():
         logging.info(f"Saved user: {user_email}")
 
     # Begin user session by logging the user in
-    login_user(user)
+    if not login_user(user):
+        return "Error ocurred while logging in", 400
 
     # Send user back to homepage
     return redirect("/")
+
 
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("index"))
-
+    return redirect("/")
