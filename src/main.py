@@ -16,8 +16,6 @@ import shutil
 from flask import Flask, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 
-from jwt_token_auth import check_token, token_required
-
 from authlib.integrations.flask_client import OAuth
 
 
@@ -80,10 +78,10 @@ def get_all_images(category):
 @app.route("/api/v1/install/<install_number>/<category>")
 def get_images_for_install_number(install_number: int, category: str | None = None):
     # Check the token if trying to access anything except panoramas
-    if category != "panorama":
-        token_check_result = check_token(request.headers.get("token"))
-        if token_check_result:
-            return token_check_result
+    #if category != "panorama":
+    #    token_check_result = check_token(request.headers.get("token"))
+    #    if token_check_result:
+    #        return token_check_result
 
     try:
         j = jsonify(
@@ -104,9 +102,9 @@ def get_images_for_install_number(install_number: int, category: str | None = No
 def update():
     # FIXME (wdn): This token checking business is not going to fly in the long
     # run
-    token_check_result = check_token(request.headers.get("token"))
-    if token_check_result:
-        return token_check_result
+    #token_check_result = check_token(request.headers.get("token"))
+    #if token_check_result:
+    #    return token_check_result
 
     id = request.values.get("id")
     new_install_number = request.values.get("new_install_number")
@@ -123,9 +121,9 @@ def update():
 @login_required
 @app.route("/api/v1/upload", methods=["POST"])
 def upload():
-    token_check_result = check_token(request.headers.get("token"))
-    if token_check_result:
-        return token_check_result
+    #token_check_result = check_token(request.headers.get("token"))
+    #if token_check_result:
+    #    return token_check_result
 
     logging.info("Received upload request.")
     if "installNumber" not in request.values:
