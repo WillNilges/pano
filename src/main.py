@@ -114,16 +114,6 @@ def update():
     )
     return jsonify(image), 200
 
-@app.route('/api/v1/upload', methods=['OPTIONS'])
-@login_required
-def options():
-    return '', 200
-
-@app.errorhandler(RequestEntityTooLarge)
-def handle_large_file(error):
-    return jsonify({'error': 'File size exceeds the maximum limit of 16 MB.'}), 413
-
-
 @app.route("/api/v1/upload", methods=["POST"])
 @login_required
 def upload():
