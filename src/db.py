@@ -1,11 +1,13 @@
 import logging
 import os
 import uuid
+
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from models.base import Base
 from models.image import Image, ImageCategory
+from src.models.user import User
 
 
 class PanoDB:
@@ -48,4 +50,19 @@ class PanoDB:
     def save_image(self, image: Image):
         with Session(self.engine, expire_on_commit=False) as session:
             session.add(image)
+            session.commit()
+
+    # Hmmmm this boilerplate/duplication could be fixed by Django.
+    def get_user(self, id: str) -> User:
+        with Session(self.engine, expire_on_commit=False) as session:
+            statement = select(User).filter_by(id=id)
+            row = session.execute(statement).first()
+            if row:
+                return row[0]
+            logging.warning(f"Could not find User with id {id}")
+            return None
+
+    def save_user(self, user: User):
+        with Session(self.engine, expire_on_commit=False) as session:
+            session.add(user)
             session.commit()

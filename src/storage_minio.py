@@ -1,12 +1,14 @@
 import logging
 import os
-from pathlib import PurePosixPath
 import uuid
-from minio import Minio
+from pathlib import PurePosixPath
 
+from minio import Minio
+from wand.image import Image as WandImage
+
+from models.image import Image
 from settings import MINIO_BUCKET, MINIO_SECURE, MINIO_URL, WORKING_DIRECTORY
 from storage import Storage
-from wand.image import Image as WandImage
 
 log = logging.getLogger("pano.storage_minio")
 
@@ -76,6 +78,7 @@ class StorageMinio(Storage):
             return True
         return False
 
-    @staticmethod
-    def get_object_path(install_number: int, id: uuid.UUID) -> str:
-        return f"{install_number}/{id}"
+    def get_presigned_url(self, image: Image) -> str:
+        return self.client.presigned_get_object(
+            self.bucket, f"{image.install_number}/{image.id}"
+        )

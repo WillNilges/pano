@@ -1,5 +1,5 @@
-from pathlib import PurePosixPath
 import unittest
+from pathlib import PurePosixPath
 from unittest.mock import MagicMock, patch
 
 from pymeshdb.models.building import Building

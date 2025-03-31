@@ -1,21 +1,22 @@
-import uuid
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-from minio.error import S3Error
 import logging
+import os
+import shutil
+import uuid
+from datetime import timedelta
 
 import pymeshdb
+from authlib.integrations.flask_client import OAuth
+from flask import Flask, jsonify, redirect, request, url_for
+from flask_cors import CORS
+from flask_login import (LoginManager, current_user, login_required,
+                         login_user, logout_user)
+from werkzeug.exceptions import RequestEntityTooLarge
+from werkzeug.utils import secure_filename
+
 from models.image import ImageCategory
 from pano import Pano
 from settings import UPLOAD_DIRECTORY, WORKING_DIRECTORY
-from storage import Storage
-
-import os
-import shutil
-from flask import Flask, flash, request, redirect, url_for
-from werkzeug.utils import secure_filename
-
-from jwt_token_auth import check_token, token_required
+from src.models.user import User
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
@@ -30,8 +31,28 @@ pano = Pano()
 app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
 app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1000 * 1000
+app.config["MAX_CONTENT_LENGTH"] = 100 * 1000 * 1000
 app.config["SECRET_KEY"] = "chomskz"
+
+CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://127.0.0.1:3000"}})
+
+# Authlib
+oauth = OAuth(app)
+
+# Register google outh
+CONF_URL = "https://accounts.google.com/.well-known/openid-configuration"  # provide us with common metadata configurations
+google = oauth.register(
+    name="google",
+    server_metadata_url=CONF_URL,
+    # Collect client_id and client secret from google auth api
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    client_kwargs={"scope": "openid email profile"},
+)
+
+# User session management setup
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 
 def allowed_file(filename):
@@ -40,6 +61,11 @@ def allowed_file(filename):
 
 @app.route("/api/v1/<category>")
 def get_all_images(category):
+    try:
+        ImageCategory[category]
+    except KeyError:
+        return "Invalid image category", 400
+
     j = jsonify(pano.get_all_images(ImageCategory[category]))
     return j, 200
 
@@ -49,10 +75,10 @@ def get_all_images(category):
 @app.route("/api/v1/install/<install_number>/<category>")
 def get_images_for_install_number(install_number: int, category: str | None = None):
     # Check the token if trying to access anything except panoramas
-    if category != "panorama":
-        token_check_result = check_token(request.headers.get("token"))
-        if token_check_result:
-            return token_check_result
+    # if category != "panorama":
+    #    token_check_result = check_token(request.headers.get("token"))
+    #    if token_check_result:
+    #        return token_check_result
 
     try:
         j = jsonify(
@@ -69,12 +95,13 @@ def get_images_for_install_number(install_number: int, category: str | None = No
 
 
 @app.route("/api/v1/update", methods=["POST"])
+@login_required
 def update():
     # FIXME (wdn): This token checking business is not going to fly in the long
     # run
-    token_check_result = check_token(request.headers.get("token"))
-    if token_check_result:
-        return token_check_result
+    # token_check_result = check_token(request.headers.get("token"))
+    # if token_check_result:
+    #    return token_check_result
 
     id = request.values.get("id")
     new_install_number = request.values.get("new_install_number")
@@ -83,16 +110,16 @@ def update():
         uuid.UUID(id),
         int(new_install_number) if new_install_number else None,
         ImageCategory[new_category.lower()] if new_category else None,
-        None, # TODO (wdn): Allow users to update the image itself
+        None,  # TODO (wdn): Allow users to update the image itself
     )
     return jsonify(image), 200
 
-
 @app.route("/api/v1/upload", methods=["POST"])
+@login_required
 def upload():
-    token_check_result = check_token(request.headers.get("token"))
-    if token_check_result:
-        return token_check_result
+    # token_check_result = check_token(request.headers.get("token"))
+    # if token_check_result:
+    #    return token_check_result
 
     logging.info("Received upload request.")
     if "installNumber" not in request.values:
@@ -152,7 +179,7 @@ def upload():
                 )
 
                 # If duplicates were found from that upload, then don't do
-                # anything else and keep chekcing for more.
+                # anything else and keep checking for more.
                 if d:
                     possible_duplicates.update(d)
                     continue
@@ -179,4 +206,66 @@ def upload():
 
 @app.route("/", methods=["GET", "POST"])
 def home():
-    return "whats up dog"
+    if not current_user.is_authenticated:
+        return "whats up dog (<a href='/login/google'>click here to login</a>)"
+
+    return (
+        "<p>Hello, {}! You're logged in! Email: {}</p>"
+        '<a class="button" href="/logout">Logout</a>'.format(
+            current_user.name, current_user.email_address
+        )
+    )
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return pano.db.get_user(user_id)
+
+
+# Routes for login
+@app.route("/login/google")
+def googleLogin():
+    redirect_uri = url_for("authorize", _external=True)
+    google = oauth.create_client("google")
+    return google.authorize_redirect(redirect_uri)
+
+
+@app.route("/authorize")
+def authorize():
+    token = oauth.google.authorize_access_token()
+    user = token["userinfo"]
+    if not user.get("email_verified"):
+        logging.warning("User has not verified email.")
+        return "Please verify your email before using Pano.", 400
+
+    # "sub" is unique id
+    unique_id = user.get("sub")
+    user_name = user.get("name")
+    user_email = user.get("email")
+
+    # This should be handled by Google, but might as well add a check.
+    if not "@nycmesh.net" in user_email:
+        return "You must have an NYCMesh email to use this service", 400
+
+    # Create a user in your db with the information provided
+    # by Google
+    user = User(id=unique_id, is_active=True, name=user_name, email_address=user_email)
+
+    # Doesn't exist? Add it to the database.
+    if not pano.db.get_user(unique_id):
+        pano.db.save_user(user)
+        logging.info(f"Saved user: {user_email}")
+
+    # Begin user session by logging the user in
+    if not login_user(user, remember=True, duration=timedelta(days=2)):
+        return "Error ocurred while logging in", 400
+
+    # Send user back to homepage
+    return redirect("/")
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect("/")
