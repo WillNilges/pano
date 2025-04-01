@@ -103,24 +103,17 @@ class Pano:
         return image_dict
 
     def handle_upload(
-        self, install_number: int, file_path: str, bypass_dupe_protection: bool = False
+        self, install_id: uuid.UUID, file_path: str, bypass_dupe_protection: bool = False
     ) -> dict[str, str]:
-        building = self.meshdb.get_primary_building_for_install(install_number)
-        # TODO: Distinguish between the server erroring, and getting passed a
-        # bad install #
-        if not building:
-            raise ValueError("Could not find a building associated with that Install #")
-
         # Create a DB object
         image_object = Image(
             path=file_path,
-            install_number=install_number,
-            category=ImageCategory.uncategorized,
+            install_number=install_id,
         )
 
         # Check the images for possible duplicates.
         if not bypass_dupe_protection:
-            possible_duplicates = self.detect_duplicates(install_number, image_object)
+            possible_duplicates = self.detect_duplicates(install_id, image_object)
             if possible_duplicates:
                 return possible_duplicates
 

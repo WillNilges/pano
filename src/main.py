@@ -8,8 +8,13 @@ import pymeshdb
 from authlib.integrations.flask_client import OAuth
 from flask import Flask, jsonify, redirect, request, url_for
 from flask_cors import CORS
-from flask_login import (LoginManager, current_user, login_required,
-                         login_user, logout_user)
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
@@ -34,7 +39,11 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1000 * 1000
 app.config["SECRET_KEY"] = "chomskz"
 
-CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://127.0.0.1:3000"}})
+CORS(
+    app,
+    supports_credentials=True,
+    resources={r"/api/*": {"origins": "http://127.0.0.1:3000"}},
+)
 
 # Authlib
 oauth = OAuth(app)
@@ -114,6 +123,7 @@ def update():
     )
     return jsonify(image), 200
 
+
 @app.route("/api/v1/upload", methods=["POST"])
 @login_required
 def upload():
@@ -140,9 +150,10 @@ def upload():
         logging.error("Bad Request! Install # wasn't an integer.")
         return {"detail": "Install # wasn't an integer"}, 400
 
-    if not pano.meshdb.get_primary_building_for_install(install_number):
+    install = pano.meshdb.get_install(install_number)
+    if not install:
         e = {
-            "detail": "Could not find building for this install number. Is this a valid number?"
+            "detail": "Could not resolve install number. Is this a valid install?"
         }
         logging.error(e)
         return e, 400
@@ -175,7 +186,7 @@ def upload():
             # Try to upload it to S3 and save it in MeshDB
             try:
                 d = pano.handle_upload(
-                    install_number, file_path, bypass_dupe_protection
+                    uuid.UUID(install.id), file_path, bypass_dupe_protection
                 )
 
                 # If duplicates were found from that upload, then don't do
