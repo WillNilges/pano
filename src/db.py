@@ -2,6 +2,7 @@ import logging
 import os
 import uuid
 
+from settings import PG_CONN
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
@@ -11,7 +12,7 @@ from src.models.user import User
 
 
 class PanoDB:
-    def __init__(self, connection_string=os.getenv("PG_CONN")) -> None:
+    def __init__(self, connection_string=PG_CONN) -> None:
         self.engine = create_engine(connection_string, echo=False)
         Base.metadata.create_all(self.engine)
 
