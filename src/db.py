@@ -6,12 +6,12 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from models.base import Base
-from models.image import Image, ImageCategory
+from models.image import Image
 from src.models.user import User
 
 
 class PanoDB:
-    def __init__(self, connection_string=os.environ["PG_CONN"]) -> None:
+    def __init__(self, connection_string=os.getenv("PG_CONN")) -> None:
         self.engine = create_engine(connection_string, echo=False)
         Base.metadata.create_all(self.engine)
 
@@ -31,15 +31,13 @@ class PanoDB:
             return None
 
     def get_images(
-        self, install_number: int | None = None, category: ImageCategory | None = None
+        self, install_id: uuid.UUID | None = None
     ) -> list[Image]:
         images = []
         with Session(self.engine, expire_on_commit=False) as session:
             statement = select(Image)
-            if install_number:
-                statement = statement.filter_by(install_number=int(install_number))
-            if category:
-                statement = statement.filter_by(category=category)
+            if install_id:
+                statement = statement.filter_by(install_id=install_id)
             rows = session.execute(statement).fetchall()
             if rows:
                 # FIXME: This is probably the wrong way to get this data
@@ -53,7 +51,7 @@ class PanoDB:
             session.commit()
 
     # Hmmmm this boilerplate/duplication could be fixed by Django.
-    def get_user(self, id: str) -> User:
+    def get_user(self, id: str) -> User | None:
         with Session(self.engine, expire_on_commit=False) as session:
             statement = select(User).filter_by(id=id)
             row = session.execute(statement).first()

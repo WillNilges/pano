@@ -1,20 +1,13 @@
 import dataclasses
 import logging
-import os
-import re
 import uuid
-from pathlib import PurePosixPath
 from typing import Optional
-
-from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session
 
 from db import PanoDB
 from meshdb_client import MeshdbClient
-from models.base import Base
-from models.image import Image, ImageCategory
-from storage import Storage
+from models.image import Image
 from storage_minio import StorageMinio
+from werkzeug.exceptions import NotFound
 
 
 class Pano:
@@ -29,22 +22,26 @@ class Pano:
         self.db: PanoDB = db
 
     def get_all_images(
-        self, category: ImageCategory | None = None
+        self
     ) -> dict[int, list[dict]]:
         serialized_images = {}
         for image in self.db.get_images():
-            if not serialized_images.get(image.install_number):
-                serialized_images[image.install_number] = []
+            if not serialized_images.get(image.install_id):
+                serialized_images[image.install_id] = []
 
             i = dataclasses.asdict(image)
             i["url"] = self.storage.get_presigned_url(image)
-            serialized_images[image.install_number].append(i)
+            serialized_images[image.install_id].append(i)
         return serialized_images
 
     def get_images(
-        self, install_number: int, category: ImageCategory | None = None
+        self, install_number: int
     ) -> list[dict]:
-        images = self.db.get_images(install_number=install_number, category=category)
+        install = self.meshdb.get_install(install_number)
+        if not install:
+            raise NotFound("Could not resolve new install number. Is this a valid install?")
+
+        images = self.db.get_images(install_id=uuid.UUID(install.id))
         serialized_images = []
         for image in images:
             i = dataclasses.asdict(image)
@@ -58,7 +55,6 @@ class Pano:
         self,
         id: uuid.UUID,
         new_install_number: Optional[int],
-        new_category: Optional[ImageCategory],
         file_path: Optional[str],
     ):
         """
@@ -80,10 +76,10 @@ class Pano:
 
         # Update details if necessary
         if new_install_number:
-            image.install_number = new_install_number
-
-        if new_category:
-            image.category = new_category
+            new_install = self.meshdb.get_install(new_install_number)
+            if not new_install:
+                raise NotFound("Could not resolve new install number. Is this a valid install?")
+            image.install_id = uuid.UUID(new_install.id)
 
         if file_path:
             image.signature = image.get_image_signature(file_path)

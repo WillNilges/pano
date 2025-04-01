@@ -1,18 +1,12 @@
-import dataclasses
-import enum
 import logging
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import PurePosixPath
-
-from sqlalchemy import CheckConstraint, DateTime, select
-from sqlalchemy.orm import Mapped, Session, mapped_column
+from sqlalchemy import CheckConstraint, DateTime
+from sqlalchemy.orm import Mapped, mapped_column
 from wand.image import Image as WandImage
-
 from models.base import Base
-from settings import MINIO_BUCKET, MINIO_SECURE, MINIO_URL
-
 
 @dataclass
 class Image(Base):
@@ -20,8 +14,8 @@ class Image(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
-    install_number: Mapped[uuid.UUID] = mapped_column(nullable=True)
-    network_number: Mapped[uuid.UUID] = mapped_column(nullable=True)
+    install_id: Mapped[uuid.UUID] = mapped_column(nullable=True)
+    node_id: Mapped[uuid.UUID] = mapped_column(nullable=True)
     # The hash of the image generated from ImageMagick
     signature: Mapped[str] = mapped_column()
     # The name of the file when it was uploaded
@@ -39,15 +33,15 @@ class Image(Base):
     def __init__(
         self,
         path: str,
-        install_number: uuid.UUID | None = None,
-        network_number: uuid.UUID | None = None,
+        install_id: uuid.UUID | None = None,
+        node_id: uuid.UUID | None = None,
     ):
         self.id = uuid.uuid4()
         self.timestamp = datetime.now() # TODO: Extract from image metadata
-        if install_number:
-            self.install_number = install_number
-        if network_number:
-            self.network_number = network_number
+        if install_id:
+            self.install = install_id
+        if node_id:
+            self.node = node_id
 
         # By default, the images have no order. Set to -1 to represent that.
         # self.order = -1
