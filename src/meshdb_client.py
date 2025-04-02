@@ -25,10 +25,11 @@ class MeshdbClient:
         self.i = InstallsApi(self.c)
 
     def get_install(self, install_number: int) -> Install | None:
-        installs = self.i.api_v1_installs_lookup_list(install_number=install_number)
-        if not installs.results:
+        install = self.i.api_v1_installs_retrieve2(install_number=install_number)
+        # TODO (wdn): Write integration test to ensure this api can return nothing 
+        if not install:
             return None
-        return installs[0]
+        return install
 
     def get_primary_building_for_install(self, install_number: int) -> Building | None:
         buildings = self.b.api_v1_buildings_lookup_list(install_number=install_number)
