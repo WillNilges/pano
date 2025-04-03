@@ -24,9 +24,9 @@ class Image(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "(install_number IS NOT NULL AND network_number IS NULL) OR "
-            "(network_number IS NOT NULL AND install_number IS NULL)",
-            name="check_install_number_and_network_number_are_mutually_exclusive",
+            "(install_id IS NOT NULL AND node_id IS NULL) OR "
+            "(node_id IS NOT NULL AND install_id IS NULL)",
+            name="check_install_id_and_node_id_are_mutually_exclusive",
         ),
     )
 
