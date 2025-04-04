@@ -32,13 +32,17 @@ class PanoDB:
             return None
 
     def get_images(
-        self, install_id: uuid.UUID | None = None
+        self,
+        install_id: uuid.UUID | None = None,
+        signature: str | None = None
     ) -> list[Image]:
         images = []
         with Session(self.engine, expire_on_commit=False) as session:
             statement = select(Image)
             if install_id:
                 statement = statement.filter_by(install_id=install_id)
+            if signature:
+                statement = statement.filter_by(signature=signature)
             rows = session.execute(statement).fetchall()
             if rows:
                 # FIXME: This is probably the wrong way to get this data

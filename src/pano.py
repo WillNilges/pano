@@ -6,6 +6,7 @@ from typing import Optional
 from db import PanoDB
 from meshdb_client import MeshdbClient
 from models.image import Image
+from models.panorama import Panorama
 from storage_minio import StorageMinio
 from werkzeug.exceptions import NotFound
 
@@ -102,14 +103,14 @@ class Pano:
         self, install_id: uuid.UUID, file_path: str, bypass_dupe_protection: bool = False
     ) -> dict[str, str]:
         # Create a DB object
-        image_object = Image(
+        image_object = Panorama(
             path=file_path,
-            install_number=install_id,
+            install_id=install_id,
         )
 
         # Check the images for possible duplicates.
         if not bypass_dupe_protection:
-            possible_duplicates = self.detect_duplicates(install_id, image_object)
+            possible_duplicates = self.detect_duplicates(image_object)
             if possible_duplicates:
                 return possible_duplicates
 
@@ -126,7 +127,7 @@ class Pano:
         return {}
 
     def detect_duplicates(
-        self, install_number: int, uploaded_image: Image
+        self, uploaded_image: Image
     ) -> dict[str, str]:
         """
         Uses ImageMagick to check the hash of the files uploaded against photos
@@ -137,7 +138,7 @@ class Pano:
         possible_duplicates = {}
 
         # Get any images we already uploaded for this install
-        images = self.db.get_images(install_number)
+        images = self.db.get_images(signature=uploaded_image.signature)
         for i in images:
             if uploaded_image.signature in i.signature:
                 possible_duplicates[

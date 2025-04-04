@@ -13,4 +13,5 @@ class Panorama(Image):
         node_id: uuid.UUID | None = None,
     ):
         self.order = 0
+        self.public = True # Panoramas are public by default
         super().__init__(path, install_id, node_id)
