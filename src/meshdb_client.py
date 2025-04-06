@@ -14,10 +14,12 @@ log = logging.getLogger("pano.meshdb_client")
 
 class MeshdbClient:
     def __init__(self):
+        self.host = os.environ["MESHDB_ENDPOINT"]
+        self.token = os.environ["MESHDB_TOKEN"]
         self.config = Configuration(
-            host=os.environ["MESHDB_ENDPOINT"],
-            access_token=os.environ["MESHDB_TOKEN"],
-            api_key={"tokenAuth": os.environ["MESHDB_TOKEN"]},
+            host=self.host,
+            access_token=self.token,
+            api_key={"tokenAuth": self.token},
             api_key_prefix={"tokenAuth": "Token"},
         )
         self.c = ApiClient(self.config)
@@ -30,6 +32,9 @@ class MeshdbClient:
         if not install:
             return None
         return install
+        #r = requests.get(f"{self.host}", headers={
+        #    "Authorization": f"Token {self.access_token}"
+        #})
 
     def get_primary_building_for_install(self, install_number: int) -> Building | None:
         buildings = self.b.api_v1_buildings_lookup_list(install_number=install_number)

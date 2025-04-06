@@ -39,12 +39,9 @@ class Image(Base):
         self.id = uuid.uuid4()
         self.timestamp = datetime.now() # TODO: Extract from image metadata
         if install_id:
-            self.install = install_id
+            self.install_id = install_id
         if node_id:
-            self.node = node_id
-
-        # By default, the images have no order. Set to -1 to represent that.
-        # self.order = -1
+            self.node_id = node_id
 
         # Store a signature for the image
         self.signature = self.get_image_signature(path)
