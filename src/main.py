@@ -6,7 +6,7 @@ from datetime import timedelta
 
 import pymeshdb
 from authlib.integrations.flask_client import OAuth
-from flask import Flask, jsonify, redirect, request, url_for
+from flask import Flask, Request, Response, jsonify, redirect, request, url_for
 from flask_cors import CORS
 from flask_login import (
     LoginManager,
@@ -28,7 +28,6 @@ logging.basicConfig(
 )
 log = logging.getLogger("pano")
 
-
 pano = Pano()
 
 app = Flask(__name__)
@@ -37,10 +36,15 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1000 * 1000
 app.config["SECRET_KEY"] = "chomskz"
 
+allowed_origins = {"origins": "http://127.0.0.1:3000"}
+
 CORS(
     app,
     supports_credentials=True,
-    resources={r"/api/*": {"origins": "http://127.0.0.1:3000"}},
+    resources={
+        r"/api/*": allowed_origins,
+        r"/userinfo": allowed_origins
+    },
 )
 
 # Authlib
@@ -87,13 +91,76 @@ def get_images_for_install_number(install_number: int, category: str | None = No
 def update():
     id = request.values.get("id")
     new_install_number = request.values.get("new_install_number")
-    new_category = request.values.get("new_category")
+
+    # check if the post request has the file part
+    if "dropzoneImages[]" not in request.files:
+        logging.error("Bad Request! Found no files.")
+        return {"detail": "Found no files. Maybe the request is malformed?"}, 400
+
+    dropzone_files = request.files.getlist("dropzoneImages[]")
+
+    possible_duplicates = handle_file_submission(dropzone_files, )
+
     image = pano.update_image(
         uuid.UUID(id),
         int(new_install_number) if new_install_number else None,
         None,  # TODO (wdn): Allow users to update the image itself
     )
     return jsonify(image), 200
+
+def handle_file_submission(dropzone_files, install_id: uuid.UUID, bypass_dupe_protection: bool)-> dict:
+    # We're gonna check each file for dupes. If we find a dupe, we keep track
+    # of it and bail back to the client, changing nothing except for temp storage
+    # until we get a confirmation.
+    possible_duplicates = {}
+
+    for file in dropzone_files:
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        if not file.filename:
+            raise ValueError("File has no filename")
+        if file and allowed_file(file.filename):
+            # Sanitize input
+            filename = secure_filename(file.filename)
+            # Ensure that the upload directory exists
+            try:
+                os.makedirs(UPLOAD_DIRECTORY)
+            except:
+                pass
+
+            # Save the file to local storage
+            file_path = os.path.join(UPLOAD_DIRECTORY, filename)
+            file.save(file_path)
+
+            # Try to upload it to S3 and save it in MeshDB
+            try:
+                d = pano.handle_upload(
+                    install_id, file_path, bypass_dupe_protection
+                )
+
+                # If duplicates were found from that upload, then don't do
+                # anything else and keep checking for more.
+                if d:
+                    possible_duplicates.update(d)
+                    continue
+            except ValueError as e:
+                logging.exception(
+                    "Something went wrong processing this panorama upload"
+                )
+                raise e
+                #return {
+                #    "detail": "Something went wrong processing this panorama upload"
+                #}, 400
+            except pymeshdb.exceptions.BadRequestException as e:
+                logging.exception("Problem communicating with MeshDB.")
+                raise e
+                #return {"detail": "There was a problem communicating with MeshDB."}, 500
+
+    # Clean up working directory
+    shutil.rmtree(WORKING_DIRECTORY)
+    os.makedirs(WORKING_DIRECTORY)
+
+    return possible_duplicates
 
 
 @app.route("/api/v1/upload", methods=["POST"])
@@ -183,7 +250,7 @@ def upload():
     return "", 201
 
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
 def home():
     if not current_user.is_authenticated:
         return "whats up dog (<a href='/login/google'>click here to login</a>)"
@@ -194,6 +261,13 @@ def home():
             current_user.name, current_user.email_address
         )
     )
+
+@app.route("/userinfo", methods=["GET"])
+def userinfo():
+    if not current_user.is_authenticated:
+        return {"detail": "Please log in"}, 401
+
+    return {"name": current_user.name, "email": current_user.email_address}, 200
 
 
 @login_manager.user_loader
