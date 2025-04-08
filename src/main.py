@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 import os
 import shutil
@@ -69,6 +70,14 @@ login_manager.init_app(app)
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.route("/api/v1/image/<image_id>")
+def get_image_by_image_id(image_id: uuid.UUID):
+    image = pano.db.get_image(image_id)
+    i = dataclasses.asdict(image)
+    i["url"] = pano.storage.get_presigned_url(image)
+
+    return i, 200
+
 # Any other route requires auth.
 @app.route("/api/v1/install/<install_number>")
 @app.route("/api/v1/install/<install_number>/<category>")
@@ -98,69 +107,43 @@ def update():
         return {"detail": "Found no files. Maybe the request is malformed?"}, 400
 
     dropzone_files = request.files.getlist("dropzoneImages[]")
+    if len(dropzone_files) != 1:
+        return {"detail": "Too many files! This endpoint only expects one"}, 400
 
-    possible_duplicates = handle_file_submission(dropzone_files, )
+    # There should only be one file
+    file = dropzone_files[0]
+
+    if not file:
+        return {"detail": "Empty file"}, 400
+
+    # If the user does not select a file, the browser submits an
+    # empty file without a filename.
+    if not file.filename:
+        logging.error("No filename?")
+        return {"detail": "File has no filename"}, 400
+
+    if not allowed_file(file.filename):
+        return {"detail": "Invalid filename"}, 400
+
+    # Sanitize input
+    filename = secure_filename(file.filename)
+
+    # Ensure that the upload directory exists
+    try:
+        os.makedirs(UPLOAD_DIRECTORY)
+    except:
+        pass
+
+    # Save the file to local storage
+    file_path = os.path.join(UPLOAD_DIRECTORY, filename)
+    file.save(file_path)
 
     image = pano.update_image(
         uuid.UUID(id),
         int(new_install_number) if new_install_number else None,
-        None,  # TODO (wdn): Allow users to update the image itself
+        file_path,
     )
     return jsonify(image), 200
-
-def handle_file_submission(dropzone_files, install_id: uuid.UUID, bypass_dupe_protection: bool)-> dict:
-    # We're gonna check each file for dupes. If we find a dupe, we keep track
-    # of it and bail back to the client, changing nothing except for temp storage
-    # until we get a confirmation.
-    possible_duplicates = {}
-
-    for file in dropzone_files:
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
-        if not file.filename:
-            raise ValueError("File has no filename")
-        if file and allowed_file(file.filename):
-            # Sanitize input
-            filename = secure_filename(file.filename)
-            # Ensure that the upload directory exists
-            try:
-                os.makedirs(UPLOAD_DIRECTORY)
-            except:
-                pass
-
-            # Save the file to local storage
-            file_path = os.path.join(UPLOAD_DIRECTORY, filename)
-            file.save(file_path)
-
-            # Try to upload it to S3 and save it in MeshDB
-            try:
-                d = pano.handle_upload(
-                    install_id, file_path, bypass_dupe_protection
-                )
-
-                # If duplicates were found from that upload, then don't do
-                # anything else and keep checking for more.
-                if d:
-                    possible_duplicates.update(d)
-                    continue
-            except ValueError as e:
-                logging.exception(
-                    "Something went wrong processing this panorama upload"
-                )
-                raise e
-                #return {
-                #    "detail": "Something went wrong processing this panorama upload"
-                #}, 400
-            except pymeshdb.exceptions.BadRequestException as e:
-                logging.exception("Problem communicating with MeshDB.")
-                raise e
-                #return {"detail": "There was a problem communicating with MeshDB."}, 500
-
-    # Clean up working directory
-    shutil.rmtree(WORKING_DIRECTORY)
-    os.makedirs(WORKING_DIRECTORY)
-
-    return possible_duplicates
 
 
 @app.route("/api/v1/upload", methods=["POST"])
