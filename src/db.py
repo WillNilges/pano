@@ -32,9 +32,7 @@ class PanoDB:
             return None
 
     def get_images(
-        self,
-        install_id: uuid.UUID | None = None,
-        signature: str | None = None
+        self, install_id: uuid.UUID | None = None, signature: str | None = None
     ) -> list[Image]:
         images = []
         with Session(self.engine, expire_on_commit=False) as session:

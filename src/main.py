@@ -42,10 +42,7 @@ allowed_origins = {"origins": "http://127.0.0.1:3000"}
 CORS(
     app,
     supports_credentials=True,
-    resources={
-        r"/api/*": allowed_origins,
-        r"/userinfo": allowed_origins
-    },
+    resources={r"/api/*": allowed_origins, r"/userinfo": allowed_origins},
 )
 
 # Authlib
@@ -70,6 +67,11 @@ login_manager.init_app(app)
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+class IdResolutionError(Exception):
+    pass
+
+
 @app.route("/api/v1/image/<image_id>")
 def get_image_by_image_id(image_id: uuid.UUID):
     image = pano.db.get_image(image_id)
@@ -78,9 +80,9 @@ def get_image_by_image_id(image_id: uuid.UUID):
 
     return i, 200
 
+
 # Any other route requires auth.
 @app.route("/api/v1/install/<install_number>")
-@app.route("/api/v1/install/<install_number>/<category>")
 def get_images_for_install_number(install_number: int, category: str | None = None):
     try:
         j = jsonify(
@@ -162,19 +164,12 @@ def upload():
         logging.error("Bad Request! Found no files.")
         return {"detail": "Found no files. Maybe the request is malformed?"}, 400
 
+    # We can be passed install number or network number, but not both.
     try:
-        install_number = int(request.values["installNumber"])
-    except ValueError:
-        logging.error("Bad Request! Install # wasn't an integer.")
-        return {"detail": "Install # wasn't an integer"}, 400
-
-    install = pano.meshdb.get_install(install_number)
-    if not install:
-        e = {
-            "detail": "Could not resolve install number. Is this a valid install?"
-        }
-        logging.error(e)
-        return e, 400
+        install_id, node_id = resolve_install_id_or_node_id(request)
+    except IdResolutionError as e:
+        logging.exception(e)
+        return {"detail": e}, 400
 
     dropzone_files = request.files.getlist("dropzoneImages[]")
 
@@ -204,7 +199,7 @@ def upload():
             # Try to upload it to S3 and save it in MeshDB
             try:
                 d = pano.handle_upload(
-                    uuid.UUID(install.id), file_path, bypass_dupe_protection
+                    install_id, node_id, file_path, bypass_dupe_protection
                 )
 
                 # If duplicates were found from that upload, then don't do
@@ -233,6 +228,52 @@ def upload():
     return "", 201
 
 
+# Given a Request, resolves either an install_id or a node_id. Raises an exception
+# if both are resolved. Can also raise ValueErrors if unexpected values are found
+# Return value is in the form [install_id, node_id]
+def resolve_install_id_or_node_id(
+    request: Request,
+) -> tuple[uuid.UUID | None, uuid.UUID | None]:
+    install_number = None
+    network_number = None
+
+    try:
+        i = request.values.get("installNumber")
+        if i:
+            install_number = int(i)
+    except ValueError:
+        raise IdResolutionError("Bad Request! Install # wasn't an integer.")
+
+    try:
+        n = request.values.get("networkNumber")
+        if n:
+            network_number = int(n)
+    except ValueError:
+        raise IdResolutionError("Bad Request! Network Number wasn't an integer.")
+
+    if install_number and network_number:
+        raise IdResolutionError("Cannot pass both an NN and an Install #")
+
+    if install_number:
+        install = pano.meshdb.get_install(install_number)
+        if not install:
+            raise IdResolutionError(
+                "Could not resolve install number. Is this a valid install?"
+            )
+
+        return uuid.UUID(install.id), None
+
+    if network_number:
+        node = pano.meshdb.get_node(network_number)
+        if not node:
+            raise IdResolutionError(
+                "Could not resolve node. Is this a valid network number?"
+            )
+        return None, uuid.UUID(node.id)
+
+    raise IdResolutionError("Something unexpected happened.")
+
+
 @app.route("/", methods=["GET"])
 def home():
     if not current_user.is_authenticated:
@@ -248,6 +289,7 @@ def home():
             current_user.name, current_user.email_address
         )
     )
+
 
 @app.route("/userinfo", methods=["GET"])
 def userinfo():

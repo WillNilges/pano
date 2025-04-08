@@ -79,6 +79,4 @@ class StorageMinio(Storage):
         return False
 
     def get_presigned_url(self, image: Image) -> str:
-        return self.client.presigned_get_object(
-            self.bucket, f"{image.id}"
-        )
+        return self.client.presigned_get_object(self.bucket, f"{image.id}")

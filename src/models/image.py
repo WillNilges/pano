@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from wand.image import Image as WandImage
 from models.base import Base
 
+
 @dataclass
 class Image(Base):
     __tablename__ = "image"
@@ -37,7 +38,12 @@ class Image(Base):
         node_id: uuid.UUID | None = None,
     ):
         self.id = uuid.uuid4()
-        self.timestamp = datetime.now() # TODO: Extract from image metadata
+        self.timestamp = datetime.now()  # TODO: Extract from image metadata
+
+        # The constraint should save us here but why not add redundancy
+        if install_id and node_id:
+            raise ValueError("Cannot pass both install_id and node_id!")
+
         if install_id:
             self.install_id = install_id
         if node_id:

@@ -1,13 +1,14 @@
 import logging
 import os
 
-import pymeshdb
 from pymeshdb.api.buildings_api import BuildingsApi
-from pymeshdb.api.installs_api import InstallsApi 
+from pymeshdb.api.installs_api import InstallsApi
+from pymeshdb.api.nodes_api import NodesApi
 from pymeshdb.api_client import ApiClient
 from pymeshdb.configuration import Configuration
 from pymeshdb.models.building import Building
 from pymeshdb.models.install import Install
+from pymeshdb.models.node import Node
 
 log = logging.getLogger("pano.meshdb_client")
 
@@ -25,16 +26,13 @@ class MeshdbClient:
         self.c = ApiClient(self.config)
         self.b = BuildingsApi(self.c)
         self.i = InstallsApi(self.c)
+        self.n = NodesApi(self.c)
 
     def get_install(self, install_number: int) -> Install | None:
-        install = self.i.api_v1_installs_retrieve2(install_number=install_number)
-        # TODO (wdn): Write integration test to ensure this api can return nothing 
-        if not install:
-            return None
-        return install
-        #r = requests.get(f"{self.host}", headers={
-        #    "Authorization": f"Token {self.access_token}"
-        #})
+        return self.i.api_v1_installs_retrieve2(install_number=install_number)
+
+    def get_node(self, network_number: int) -> Node | None:
+        return self.n.api_v1_nodes_retrieve2(network_number=network_number)
 
     def get_primary_building_for_install(self, install_number: int) -> Building | None:
         buildings = self.b.api_v1_buildings_lookup_list(install_number=install_number)

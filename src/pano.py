@@ -23,9 +23,7 @@ class Pano:
         self.storage: StorageMinio = storage
         self.db: PanoDB = db
 
-    def get_all_images(
-        self
-    ) -> dict[int, list[dict]]:
+    def get_all_images(self) -> dict[int, list[dict]]:
         serialized_images = {}
         for image in self.db.get_images():
             if not serialized_images.get(image.install_id):
@@ -36,12 +34,12 @@ class Pano:
             serialized_images[image.install_id].append(i)
         return serialized_images
 
-    def get_images(
-        self, install_number: int
-    ) -> list[dict]:
+    def get_images(self, install_number: int) -> list[dict]:
         install = self.meshdb.get_install(install_number)
         if not install:
-            raise NotFound("Could not resolve new install number. Is this a valid install?")
+            raise NotFound(
+                "Could not resolve new install number. Is this a valid install?"
+            )
 
         images = self.db.get_images(install_id=uuid.UUID(install.id))
         serialized_images = []
@@ -80,7 +78,9 @@ class Pano:
         if new_install_number:
             new_install = self.meshdb.get_install(new_install_number)
             if not new_install:
-                raise NotFound("Could not resolve new install number. Is this a valid install?")
+                raise NotFound(
+                    "Could not resolve new install number. Is this a valid install?"
+                )
             image.install_id = uuid.UUID(new_install.id)
 
         if file_path:
@@ -104,13 +104,14 @@ class Pano:
         return image_dict
 
     def handle_upload(
-        self, install_id: uuid.UUID, file_path: str, bypass_dupe_protection: bool = False
+        self,
+        install_id: uuid.UUID | None,
+        node_id: uuid.UUID | None,
+        file_path: str,
+        bypass_dupe_protection: bool = False,
     ) -> dict[str, str]:
         # Create a DB object
-        image_object = Panorama(
-            path=file_path,
-            install_id=install_id,
-        )
+        image_object = Panorama(path=file_path, install_id=install_id, node_id=node_id)
 
         # Check the images for possible duplicates.
         if not bypass_dupe_protection:
@@ -130,9 +131,7 @@ class Pano:
         # Empty Dict = No Dupes; We're good.
         return {}
 
-    def detect_duplicates(
-        self, uploaded_image: Image
-    ) -> dict[str, str]:
+    def detect_duplicates(self, uploaded_image: Image) -> dict[str, str]:
         """
         Uses ImageMagick to check the hash of the files uploaded against photos
         that already exist under an install. If a photo matches, the path is returned
