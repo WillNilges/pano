@@ -1,4 +1,5 @@
 import dataclasses
+from datetime import datetime
 import logging
 import uuid
 from typing import Optional
@@ -90,6 +91,9 @@ class Pano:
             except Exception as e:
                 logging.exception("Failed to upload object to S3.")
                 raise e
+
+        # Update the timestamp of the image
+        image.timestamp = datetime.now()
 
         # If all of that worked, save the image.
         self.db.save_image(image)
