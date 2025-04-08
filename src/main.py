@@ -238,6 +238,10 @@ def home():
     if not current_user.is_authenticated:
         return "whats up dog (<a href='/login/google'>click here to login</a>)"
 
+    pano_frontend_redirect_url = os.getenv("PANO_FRONTEND_REDIRECT_URL")
+    if pano_frontend_redirect_url:
+        return redirect(pano_frontend_redirect_url, 302)
+
     return (
         "<p>Hello, {}! You're logged in! Email: {}</p>"
         '<a class="button" href="/logout">Logout</a>'.format(
