@@ -152,9 +152,13 @@ def update():
 @login_required
 def upload():
     logging.info("Received upload request.")
-    if "installNumber" not in request.values:
-        logging.error("Bad Request! Missing Install # from header.")
-        return {"detail": "Missing Install # from header"}, 400
+
+    # We can be passed install number or network number, but not both.
+    try:
+        install_id, node_id = resolve_install_id_or_node_id(request)
+    except IdResolutionError as e:
+        logging.exception(e)
+        return {"detail": e}, 400
 
     bypass_dupe_protection = (
         "trustMeBro" in request.values and request.values["trustMeBro"] == "true"
@@ -163,13 +167,6 @@ def upload():
     if "dropzoneImages[]" not in request.files:
         logging.error("Bad Request! Found no files.")
         return {"detail": "Found no files. Maybe the request is malformed?"}, 400
-
-    # We can be passed install number or network number, but not both.
-    try:
-        install_id, node_id = resolve_install_id_or_node_id(request)
-    except IdResolutionError as e:
-        logging.exception(e)
-        return {"detail": e}, 400
 
     dropzone_files = request.files.getlist("dropzoneImages[]")
 
@@ -251,8 +248,13 @@ def resolve_install_id_or_node_id(
     except ValueError:
         raise IdResolutionError("Bad Request! Network Number wasn't an integer.")
 
+    # Can't have both
     if install_number and network_number:
         raise IdResolutionError("Cannot pass both an NN and an Install #")
+
+    # Can't have neither
+    if not install_number and not network_number:
+        raise IdResolutionError("Must pass either NN or Install #")
 
     if install_number:
         install = pano.meshdb.get_install(install_number)
