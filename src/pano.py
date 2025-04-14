@@ -34,14 +34,29 @@ class Pano:
             serialized_images[image.install_id].append(i)
         return serialized_images
 
-    def get_images(self, install_number: int) -> list[dict]:
-        install = self.meshdb.get_install(install_number)
-        if not install:
-            raise NotFound(
-                "Could not resolve new install number. Is this a valid install?"
-            )
+    def get_images(self, install_number: int | None = None, network_number: int | None = None) -> list[dict]:
+        install_id = None
+        node_id = None
 
-        images = self.db.get_images(install_id=uuid.UUID(install.id))
+        if install_number:
+            install = self.meshdb.get_install(install_number)
+            if not install:
+                raise NotFound(
+                    "Could not resolve new install number. Is this a valid install?"
+                )
+
+            install_id = uuid.UUID(install.id)
+
+        if network_number:
+            node = self.meshdb.get_node(network_number)
+            if not node:
+                raise NotFound(
+                    "Could not resolve network number. Is this a valid network number?"
+                )
+
+            node_id = uuid.UUID(node.id)
+
+        images = self.db.get_images(install_id=install_id, node_id=node_id)
         serialized_images = []
         for image in images:
             i = dataclasses.asdict(image)

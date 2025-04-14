@@ -6,6 +6,7 @@ import uuid
 from datetime import timedelta
 
 import pymeshdb
+from pymeshdb.exceptions import NotFoundException
 from authlib.integrations.flask_client import OAuth
 from flask import Flask, Request, Response, jsonify, redirect, request, url_for
 from flask_cors import CORS
@@ -81,21 +82,25 @@ def get_image_by_image_id(image_id: uuid.UUID):
     return i, 200
 
 
-# Any other route requires auth.
 @app.route("/api/v1/install/<install_number>")
-def get_images_for_install_number(install_number: int, category: str | None = None):
+@app.route("/api/v1/nn/<network_number>")
+def query_images(install_number: int | None = None, network_number: int | None = None):
     try:
         j = jsonify(
             pano.get_images(
-                install_number=int(install_number),
+                install_number=int(install_number) if install_number else None,
+                network_number=int(network_number) if network_number else None
             )
         )
         return j, 200
     except ValueError:
-        error = f"Install number {install_number} is not an integer."
+        error = f"{install_number if install_number else network_number} is not an integer."
         logging.exception(error)
         return {"detail": error}, 400
-
+    except NotFoundException:
+        error = f"Could not find {install_number if install_number else network_number}. Consult MeshDB to make sure the object exists."
+        logging.exception(error)
+        return {"detail": error}, 404
 
 @app.route("/api/v1/update", methods=["POST"])
 @login_required
