@@ -36,6 +36,21 @@ a particular object is very simple:
 
 `/<bucket name>/<install_number>/<uuid>`
 
+# Migrations
+
+To upgrade your database with the latest changes, run the following:
+
+```
+alembic upgrade head
+```
+
+To create new migrations when the data model is changed, run a revision command
+like so:
+
+```
+alembic revision --autogenerate -m "initial revision"
+```
+
 # Run
 
 Set up Database
