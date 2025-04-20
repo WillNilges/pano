@@ -163,7 +163,7 @@ def upload():
         install_id, node_id = resolve_install_id_or_node_id(request)
     except IdResolutionError as e:
         logging.exception(e)
-        return {"detail": e}, 400
+        return {"detail": str(e)}, 400
 
     bypass_dupe_protection = (
         "trustMeBro" in request.values and request.values["trustMeBro"] == "true"
