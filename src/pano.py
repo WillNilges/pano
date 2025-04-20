@@ -1,20 +1,15 @@
 import dataclasses
+from datetime import datetime
 import logging
-import os
-import re
 import uuid
-from pathlib import PurePosixPath
 from typing import Optional
-
-from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session
 
 from db import PanoDB
 from meshdb_client import MeshdbClient
-from models.base import Base
-from models.image import Image, ImageCategory
-from storage import Storage
+from models.image import Image
+from models.panorama import Panorama
 from storage_minio import StorageMinio
+from werkzeug.exceptions import NotFound
 
 
 class Pano:
@@ -28,23 +23,40 @@ class Pano:
         self.storage: StorageMinio = storage
         self.db: PanoDB = db
 
-    def get_all_images(
-        self, category: ImageCategory | None = None
-    ) -> dict[int, list[dict]]:
+    def get_all_images(self) -> dict[int, list[dict]]:
         serialized_images = {}
         for image in self.db.get_images():
-            if not serialized_images.get(image.install_number):
-                serialized_images[image.install_number] = []
+            if not serialized_images.get(image.install_id):
+                serialized_images[image.install_id] = []
 
             i = dataclasses.asdict(image)
             i["url"] = self.storage.get_presigned_url(image)
-            serialized_images[image.install_number].append(i)
+            serialized_images[image.install_id].append(i)
         return serialized_images
 
-    def get_images(
-        self, install_number: int, category: ImageCategory | None = None
-    ) -> list[dict]:
-        images = self.db.get_images(install_number=install_number, category=category)
+    def get_images(self, install_number: int | None = None, network_number: int | None = None) -> list[dict]:
+        install_id = None
+        node_id = None
+
+        if install_number:
+            install = self.meshdb.get_install(install_number)
+            if not install:
+                raise NotFound(
+                    "Could not resolve new install number. Is this a valid install?"
+                )
+
+            install_id = uuid.UUID(install.id)
+
+        if network_number:
+            node = self.meshdb.get_node(network_number)
+            if not node:
+                raise NotFound(
+                    "Could not resolve network number. Is this a valid network number?"
+                )
+
+            node_id = uuid.UUID(node.id)
+
+        images = self.db.get_images(install_id=install_id, node_id=node_id)
         serialized_images = []
         for image in images:
             i = dataclasses.asdict(image)
@@ -58,7 +70,6 @@ class Pano:
         self,
         id: uuid.UUID,
         new_install_number: Optional[int],
-        new_category: Optional[ImageCategory],
         file_path: Optional[str],
     ):
         """
@@ -80,10 +91,12 @@ class Pano:
 
         # Update details if necessary
         if new_install_number:
-            image.install_number = new_install_number
-
-        if new_category:
-            image.category = new_category
+            new_install = self.meshdb.get_install(new_install_number)
+            if not new_install:
+                raise NotFound(
+                    "Could not resolve new install number. Is this a valid install?"
+                )
+            image.install_id = uuid.UUID(new_install.id)
 
         if file_path:
             image.signature = image.get_image_signature(file_path)
@@ -94,6 +107,9 @@ class Pano:
                 logging.exception("Failed to upload object to S3.")
                 raise e
 
+        # Update the timestamp of the image
+        image.timestamp = datetime.now()
+
         # If all of that worked, save the image.
         self.db.save_image(image)
 
@@ -103,24 +119,18 @@ class Pano:
         return image_dict
 
     def handle_upload(
-        self, install_number: int, file_path: str, bypass_dupe_protection: bool = False
+        self,
+        install_id: uuid.UUID | None,
+        node_id: uuid.UUID | None,
+        file_path: str,
+        bypass_dupe_protection: bool = False,
     ) -> dict[str, str]:
-        building = self.meshdb.get_primary_building_for_install(install_number)
-        # TODO: Distinguish between the server erroring, and getting passed a
-        # bad install #
-        if not building:
-            raise ValueError("Could not find a building associated with that Install #")
-
         # Create a DB object
-        image_object = Image(
-            path=file_path,
-            install_number=install_number,
-            category=ImageCategory.uncategorized,
-        )
+        image_object = Panorama(path=file_path, install_id=install_id, node_id=node_id)
 
         # Check the images for possible duplicates.
         if not bypass_dupe_protection:
-            possible_duplicates = self.detect_duplicates(install_number, image_object)
+            possible_duplicates = self.detect_duplicates(image_object)
             if possible_duplicates:
                 return possible_duplicates
 
@@ -136,9 +146,7 @@ class Pano:
         # Empty Dict = No Dupes; We're good.
         return {}
 
-    def detect_duplicates(
-        self, install_number: int, uploaded_image: Image
-    ) -> dict[str, str]:
+    def detect_duplicates(self, uploaded_image: Image) -> dict[str, str]:
         """
         Uses ImageMagick to check the hash of the files uploaded against photos
         that already exist under an install. If a photo matches, the path is returned
@@ -148,7 +156,7 @@ class Pano:
         possible_duplicates = {}
 
         # Get any images we already uploaded for this install
-        images = self.db.get_images(install_number)
+        images = self.db.get_images(signature=uploaded_image.signature)
         for i in images:
             if uploaded_image.signature in i.signature:
                 possible_duplicates[
