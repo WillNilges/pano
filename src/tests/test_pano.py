@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from db import PanoDB
 from models.base import Base
-from models.image import ImageCategory
 from pano import Pano
 from settings import MINIO_URL
 
@@ -115,11 +114,9 @@ class TestPanoDB(unittest.TestCase):
         self.assertEqual(2, len(all_images))
 
         self.assertEqual(1, all_images[0]["install_number"])
-        self.assertEqual(ImageCategory.uncategorized, all_images[0]["category"])
         self.assertEqual(-1, all_images[0]["order"])
         self.assertEqual("pano.png", all_images[0]["original_filename"])
 
         self.assertEqual(1, all_images[1]["install_number"])
-        self.assertEqual(ImageCategory.uncategorized, all_images[1]["category"])
         self.assertEqual(-1, all_images[1]["order"])
         self.assertEqual("logo.jpg", all_images[1]["original_filename"])

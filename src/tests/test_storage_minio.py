@@ -1,14 +1,7 @@
 import unittest
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
-
-from db import PanoDB
-from models.base import Base
-from models.image import Image, ImageCategory
 from storage_minio import StorageMinio
 from tests.test_pano import SAMPLE_IMAGE_PATH
-
 
 class TestStorageMinio(unittest.TestCase):
     bucket_name = "test-bucket"
