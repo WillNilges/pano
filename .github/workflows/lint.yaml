@@ -1,0 +1,25 @@
+#name: Lint
+#
+#on: [pull_request]
+#
+#permissions: read-all
+#
+#jobs:
+#  invoke_lint:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v3
+#      - name: Set up Python
+#        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4
+#        with:
+#          python-version: '3.11'
+#      - name: "Upgrade pip"
+#        run: "pip install --upgrade pip"
+#      - name: "Print python version"
+#        run: "python --version"
+#      - name: "Install package"
+#        run: pip install ".[dev]"
+#      - name: "Run lint checks"
+#        run: invoke lint
+#    env:
+#      DJANGO_SECRET_KEY: SECRET_KEY
