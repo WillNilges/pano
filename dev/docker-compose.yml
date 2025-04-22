@@ -17,7 +17,7 @@ services:
     container_name: pano-minio
     image: quay.io/minio/minio
     command: |
-      server /data --console-address ":9001"
+      server /data --console-address ":9001" --insecure
     ports:
       - 9000:9000
       - 9001:9001

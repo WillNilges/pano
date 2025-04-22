@@ -7,9 +7,13 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    - port: 9001 
+      targetPort: 9001
       protocol: TCP
-      name: http
+      name: web-interface
+    - port: 9000 
+      targetPort: 9000
+      protocol: TCP
+      name: s3
   selector:
     {{- include "minio.selectorLabels" . | nindent 4 }}
