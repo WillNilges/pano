@@ -8,4 +8,4 @@ RUN pip install .
 
 COPY ./src .
 
-ENTRYPOINT exec gunicorn  -w 4 --graceful-timeout 2 'main:app'
+ENTRYPOINT exec gunicorn  -w 4 --graceful-timeout 2 -b 0.0.0.0:80 'main:app'

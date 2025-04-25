@@ -5,11 +5,10 @@ metadata:
   labels:
     {{- include "pano.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: http
+      targetPort: 80
       protocol: TCP
       name: http
   selector:
-    {{- include "pano.selectorLabels" . | nindent 4 }}
+    app: pano 
