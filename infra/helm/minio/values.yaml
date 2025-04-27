@@ -69,7 +69,7 @@ ingress:
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: img.devpano.nycmesh.net # This will get overridden. Set Values.ingress.hosts[0].host
+    - host: devimg.nycmesh.net # This will get overridden. Set Values.ingress.hosts[0].host
       paths:
         - path: /
           pathType: Prefix 

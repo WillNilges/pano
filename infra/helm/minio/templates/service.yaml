@@ -11,7 +11,7 @@ spec:
       targetPort: 9001
       protocol: TCP
       name: web-interface
-    - port: 9000 
+    - port: 80 
       targetPort: 9000
       protocol: TCP
       name: s3
