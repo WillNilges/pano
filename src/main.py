@@ -38,7 +38,10 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1000 * 1000
 app.config["SECRET_KEY"] = "chomskz"
 
-allowed_origins = {"origins": "http://127.0.0.1:3000"}
+allowed_origins = {"origins": [
+    "http://127.0.0.1:3000",
+    "https://forms.devdb.nycmesh.net",
+]}
 
 CORS(
     app,

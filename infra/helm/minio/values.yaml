@@ -62,16 +62,17 @@ service:
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
-  enabled: false
-  className: ""
+  enabled: true
+  targetService: s3 # Testing this out
+  className: "traefik"
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: chart-example.local
+    - host: img.devpano.nycmesh.net # This will get overridden. Set Values.ingress.hosts[0].host
       paths:
         - path: /
-          pathType: ImplementationSpecific
+          pathType: Prefix 
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
