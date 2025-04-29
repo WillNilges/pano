@@ -3,7 +3,7 @@ name: Publish and Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, wdn/charts ]
   workflow_dispatch:
     branches:
       - main
