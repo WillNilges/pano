@@ -22,7 +22,7 @@ jobs:
     uses: ./.github/workflows/build-push-image.yaml
     with:
       environment: dev3
-      image_tag: willnilges/pano:${{ github.ref }}
+      image_tag: willnilges/pano:${{ github.sha }}
     secrets: inherit
     #if: github.ref == 'refs/heads/main'
 
