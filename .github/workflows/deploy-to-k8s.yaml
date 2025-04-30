@@ -38,7 +38,9 @@ jobs:
         sudo ip link set up dev wg1
         
         # Ensure we can contact the target
-        ping ${{ secrets.SSH_TARGET_IP }} -w 4 || exit 1
+        #ping ${{ secrets.SSH_TARGET_IP }} -w 4 || exit 1
+        sudo apt install -y traceroute
+        traceroute ${{ secrets.SSH_TARGET_IP }} || exit 1
 
     - name: Deploy Helm Chart
       run: |
