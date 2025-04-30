@@ -46,7 +46,7 @@ jobs:
         scp ${{ secrets.SSH_USER }}@${{ secrets.SSH_TARGET_IP }}:~/.kube/config ./
 
         # Install the chart with helm
-        helm upgrade --install --kubeconfig ./config --kube-apiserver https://${{ secrets.SSH_TARGET_IP }}:6443 -n pano --create-namespace pano infra/helm/pano \
+        helm upgrade --install --kubeconfig ./config --kube-apiserver https://${{ secrets.SSH_TARGET_IP }}:6443 --namespace pano --create-namespace pano pano infra/helm/pano \
         --set pg.connection='${{ secrets.PG_CONN }}' \
         --set minio.url= '${{ vars.MINIO_URL }}' \
         --set minio.access_key='${{ secrets.MINIO_ACCESS_KEY }}' \
