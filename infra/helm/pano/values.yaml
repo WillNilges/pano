@@ -64,30 +64,11 @@ service:
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: devpano.nycmesh.net
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
-
-ingress:
   enabled: true
-  targetService: pano # Testing this out
   className: "traefik"
   annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: devpano.nycmesh.net # This will get overridden. Set Values.ingress.hosts[0].host
+    - host: api.devpano.nycmesh.net # This will get overridden. Set Values.ingress.hosts[0].host
       paths:
         - path: /
           pathType: Prefix 
