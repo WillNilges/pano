@@ -40,7 +40,8 @@ app.config["SECRET_KEY"] = "chomskz"
 
 allowed_origins = {"origins": [
     "http://127.0.0.1:3000",
-    "https://forms.devdb.nycmesh.net",
+    "https://pano.nycmesh.net",
+    "https://devpano.nycmesh.net",
 ]}
 
 CORS(
