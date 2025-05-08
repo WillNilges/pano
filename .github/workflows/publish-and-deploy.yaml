@@ -22,7 +22,6 @@ jobs:
     uses: ./.github/workflows/build-push-image.yaml
     with:
       environment: dev3
-      image_tag: willnilges/pano:${{ github.sha }}
     secrets: inherit
     #if: github.ref == 'refs/heads/main'
 
@@ -31,7 +30,7 @@ jobs:
     uses: ./.github/workflows/deploy-to-k8s.yaml
     with:
       environment: dev3
-      useTag: main 
+      image_digest: ${{ needs.push_to_registry_dev.outputs.image_digest }}
     secrets: inherit
     needs: push_to_registry_prod
     #if: github.ref == 'refs/heads/main'
@@ -41,6 +40,7 @@ jobs:
   #   uses: ./.github/workflows/run-integ-tests.yaml
   #   with:
   #     environment: dev3
+  #    image_digest: ${{ needs.push_to_registry_dev.outputs.image_digest }}
   #   secrets: inherit
   #   needs: deploy_to_dev3
   #   if: github.ref == 'refs/heads/main'
@@ -51,6 +51,7 @@ jobs:
   #   with:
   #     environment: prod2
   #     useTag: main 
+  #    image_digest: ${{ needs.push_to_registry_dev.outputs.image_digest }}
   #   secrets: inherit
   #   needs: integration_test_dev3
   #   if: github.ref == 'refs/heads/main'
