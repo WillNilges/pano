@@ -42,5 +42,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ inputs.environment }}
+          tags: willnilges/pano:${{ inputs.environment }}
           labels: ${{ steps.meta.outputs.labels }}
