@@ -34,17 +34,15 @@ spec:
       {{- end }}
       containers:
       - name: minio
-        image: quay.io/minio/minio:latest
+image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z@sha256:a1ea29fa28355559ef137d71fc570e508a214ec84ff8083e39bc5428980b015e
         command:
         - /bin/bash
         - -c
         args: 
         - minio server /data --console-address ":9001"
-        env:
-        - name: MINIO_ROOT_USER
-          value: pano
-        - name: MINIO_ROOT_PASSWORD
-          value: zoltar-transitory-mousing-frustration-29981
+        envFrom:
+        - secretRef:
+            name: minio-secrets
         volumeMounts:
         - mountPath: /data
           name: minio-data-vol # Corresponds to the `spec.volumes` Persistent Volume
