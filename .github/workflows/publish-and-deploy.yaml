@@ -30,7 +30,7 @@ jobs:
     uses: ./.github/workflows/deploy-to-k8s.yaml
     with:
       environment: dev3
-      image_digest: ${{ needs.push_to_registry_dev.outputs.image_digest }}
+      image_digest: ${{ needs.push_to_registry_prod.outputs.image_digest }}
     secrets: inherit
     needs: push_to_registry_prod
     #if: github.ref == 'refs/heads/main'
