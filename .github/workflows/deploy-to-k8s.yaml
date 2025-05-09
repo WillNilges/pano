@@ -60,8 +60,5 @@ jobs:
         --set pano.redirect='${{ vars.PANO_FRONTEND_REDIRECT_URL }}' \
         --set image.digest='${{ inputs.image_digest }}'
 
-        # Rolling restart
-        # kubectl --kubeconfig ./config --server https://${{ secrets.SSH_TARGET_IP }}:6443 -n ${{ vars.APP_NAMESPACE }} rollout restart deploy pano
-        
         # Wait for deploy to complete
         kubectl --kubeconfig ./config --server https://${{ secrets.SSH_TARGET_IP }}:6443 -n ${{ vars.APP_NAMESPACE }} rollout status deployment pano --timeout 30m
