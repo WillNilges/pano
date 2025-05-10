@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from models.base import Base
 from models.image import Image
-from src.models.user import User
+from models.user import User
 
 
 class PanoDB:
