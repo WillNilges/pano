@@ -46,7 +46,7 @@ jobs:
         scp ${{ secrets.SSH_USER }}@${{ secrets.SSH_TARGET_IP }}:~/.kube/config ./
 
         # Deploy Minio
-        helm upgrade --install --kubeconfig ./config --kube-apiserver https://${{ secrets.SSH_TARGET_IP }}:6443 --namespace pano --create-namespace pano infra/helm/minio \
+        helm upgrade --install --kubeconfig ./config --kube-apiserver https://${{ secrets.SSH_TARGET_IP }}:6443 --namespace pano --create-namespace minio infra/helm/minio \
         --set minio.user='${{ secrets.MINIO_ROOT_USER }}' \
         --set minio.password='${{ vars.MINIO_ROOT_PASSWORD }}' || exit 1
 
