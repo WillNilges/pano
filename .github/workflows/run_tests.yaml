@@ -36,17 +36,6 @@ jobs:
           - ${{ github.workspace }}/data:/data
         options: --name=minio --health-cmd "curl http://localhost:9000/minio/health/live"
     steps:
-      - name: Wait for MinIO to be ready
-        run: |
-          for i in {1..3}; do
-            if curl --silent --fail http://localhost:9000/minio/health/live; then
-              echo "MinIO is ready!"
-              exit 0
-            fi
-            echo "Waiting for MinIO..."
-            sleep 5
-          done
-          exit 1
       - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4
