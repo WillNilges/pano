@@ -29,6 +29,7 @@ dev = [
     "black==23.7.*",
     "isort==5.12.*",
     "pytest==8.3.*",
+    "coverage == 7.3.*",
 ]
 
 # uv does not respect the above optional deps and only works with these dev deps.
@@ -38,4 +39,5 @@ dev = [
     "black==23.7.*",
     "isort==5.12.*",
     "pytest==8.3.*",
+    "coverage == 7.3.*",
 ]
