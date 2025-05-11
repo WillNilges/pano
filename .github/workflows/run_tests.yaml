@@ -35,11 +35,11 @@ jobs:
             -e MINIO_ROOT_PASSWORD=test \
             minio/minio:latest \
             /bin/bash -c "minio server /data --console-address ':9001'"
-      #- name: Ensure MinIO is running
-      #  run: |
-      #    echo "Waiting for MinIO to be ready..."
-      #    sleep 5
-      #    curl http://localhost:9001/minio/health/ready
+      - name: Ensure MinIO is running
+        run: |
+          echo "Waiting for MinIO to be ready..."
+          sleep 5
+          curl -o /dev/null -s -w "%{http_code}\n" http://127.0.0.1:9000/minio/health/ready
       - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4
