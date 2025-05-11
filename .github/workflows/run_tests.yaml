@@ -32,8 +32,6 @@ jobs:
         env:
           MINIO_ACCESS_KEY: test12345
           MINIO_SECRET_KEY: test12345
-        volumes:
-          - ${{ github.workspace }}/data:/data
         options: --name=minio --health-cmd "curl http://localhost:9000/minio/health/live"
     steps:
       - uses: actions/checkout@v3
