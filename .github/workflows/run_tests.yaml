@@ -43,7 +43,7 @@ jobs:
         run: "pip install --upgrade pip"
       - name: "Install package"
         run: pip install ".[dev]"
-      - name: Run Django Tests
+      - name: Run Tests
         env:
           PG_CONN: postgresql+psycopg://nycmesh:abcd1234@localhost:5432/nycmesh-dev
           MINIO_PUBLIC_URL: localhost:9000
@@ -51,7 +51,7 @@ jobs:
           MINIO_ACCESS_KEY: test12345
           MINIO_SECRET_KEY: test12345
           MINIO_BUCKET: panoramas
-          MINIO_SECURE: "not a chance"
+          MINIO_SECURE: "True"
           MESHDB_ENDPOINT: http://localhost:8000
           MESHDB_TOKEN: test
           GOOGLE_CLIENT_ID: test
