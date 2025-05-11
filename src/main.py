@@ -205,7 +205,7 @@ def upload():
             # Try to upload it to S3 and save it in MeshDB
             try:
                 d = pano.handle_upload(
-                    install_id, node_id, file_path, bypass_dupe_protection
+                    file_path, install_id, node_id, bypass_dupe_protection
                 )
 
                 # If duplicates were found from that upload, then don't do
