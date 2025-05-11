@@ -50,7 +50,7 @@ jobs:
           MINIO_ACCESS_KEY: test
           MINIO_SECRET_KEY: test
           MINIO_BUCKET: panoramas
-          MINIO_SECURE: "False"
+          MINIO_SECURE: "not a chance"
           MESHDB_ENDPOINT: http://127.0.0.1:8000
           MESHDB_TOKEN: test
           GOOGLE_CLIENT_ID: test
