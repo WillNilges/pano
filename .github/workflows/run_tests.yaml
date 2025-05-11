@@ -30,8 +30,8 @@ jobs:
         ports:
           - 9000:9000
         env:
-          MINIO_ACCESS_KEY: test
-          MINIO_SECRET_KEY: test
+          MINIO_ACCESS_KEY: test12345
+          MINIO_SECRET_KEY: test12345
         volumes:
           - ${{ github.workspace }}/data:/data
         options: --name=minio --health-cmd "curl http://localhost:9000/minio/health/live"
@@ -61,8 +61,8 @@ jobs:
           PG_CONN: postgresql+psycopg://nycmesh:abcd1234@localhost:5432/nycmesh-dev
           MINIO_PUBLIC_URL: localhost:9000
           MINIO_URL: localhost:9000
-          MINIO_ACCESS_KEY: test
-          MINIO_SECRET_KEY: test
+          MINIO_ACCESS_KEY: test12345
+          MINIO_SECRET_KEY: test12345
           MINIO_BUCKET: panoramas
           MINIO_SECURE: "not a chance"
           MESHDB_ENDPOINT: http://localhost:8000
