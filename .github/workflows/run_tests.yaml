@@ -57,7 +57,7 @@ jobs:
           GOOGLE_CLIENT_ID: test
           GOOGLE_CLIENT_SECRET: test
           PANO_FRONTEND_REDIRECT_URL: http://localhost:3000
-        run: coverage run -m pytest
+        run: pytest --cov
       - name: Write coverage report to disk
         run: coverage html
       - name: Upload coverage reports to Codecov

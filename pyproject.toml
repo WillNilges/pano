@@ -40,4 +40,5 @@ dev = [
     "isort==5.12.*",
     "pytest==8.3.*",
     "coverage == 7.3.*",
+    "pytest-cov == 6.1.*",
 ]
