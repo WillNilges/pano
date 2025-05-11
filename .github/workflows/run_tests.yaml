@@ -44,18 +44,18 @@ jobs:
         run: pip install ".[dev]"
       - name: Run Django Tests
         env:
-          PG_CONN: postgresql+psycopg://nycmesh:abcd1234@127.0.0.1:5432/nycmesh-dev
-          MINIO_PUBLIC_URL: 127.0.0.1:9000
-          MINIO_URL: 127.0.0.1:9000
+          PG_CONN: postgresql+psycopg://nycmesh:abcd1234@localhost:5432/nycmesh-dev
+          MINIO_PUBLIC_URL: localhost:9000
+          MINIO_URL: localhost:9000
           MINIO_ACCESS_KEY: test
           MINIO_SECRET_KEY: test
           MINIO_BUCKET: panoramas
           MINIO_SECURE: "not a chance"
-          MESHDB_ENDPOINT: http://127.0.0.1:8000
+          MESHDB_ENDPOINT: http://localhost:8000
           MESHDB_TOKEN: test
           GOOGLE_CLIENT_ID: test
           GOOGLE_CLIENT_SECRET: test
-          PANO_FRONTEND_REDIRECT_URL: http://127.0.0.1:3000
+          PANO_FRONTEND_REDIRECT_URL: http://localhost:3000
         run: coverage run -m pytest
       - name: Write coverage report to disk
         run: coverage html
