@@ -1,0 +1,66 @@
+name: Run Tests
+
+on: 
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions: read-all
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: docker.io/postgres:15-bookworm
+        env:
+          POSTGRES_DB: nycmesh-dev
+          POSTGRES_USER: nycmesh
+          POSTGRES_PASSWORD: abcd1234
+          POSTGRES_PORT: 5432
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      minio:
+        image: willnilges/minio-gh
+        ports:
+          - 9000:9000
+        env:
+          MINIO_ACCESS_KEY: test12345
+          MINIO_SECRET_KEY: test12345
+        options: --name=minio --health-cmd "curl http://localhost:9000/minio/health/live"
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4
+        with:
+          python-version: '3.11'
+      - name: "Upgrade pip"
+        run: "pip install --upgrade pip"
+      - name: "Install package"
+        run: pip install ".[dev]"
+      - name: Run Tests
+        env:
+          PG_CONN: postgresql+psycopg://nycmesh:abcd1234@localhost:5432/nycmesh-dev
+          MINIO_PUBLIC_URL: localhost:9000
+          MINIO_URL: localhost:9000
+          MINIO_ACCESS_KEY: test12345
+          MINIO_SECRET_KEY: test12345
+          MINIO_BUCKET: panoramas
+          MINIO_SECURE: "False"
+          MESHDB_ENDPOINT: http://localhost:8000
+          MESHDB_TOKEN: test
+          GOOGLE_CLIENT_ID: test
+          GOOGLE_CLIENT_SECRET: test
+          PANO_FRONTEND_REDIRECT_URL: http://localhost:3000
+        run: pytest --cov
+      - name: Write coverage report to disk
+        run: coverage html
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@e0b68c6749509c5f83f984dd99a76a1c1a231044 # v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

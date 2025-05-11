@@ -120,9 +120,9 @@ class Pano:
 
     def handle_upload(
         self,
-        install_id: uuid.UUID | None,
-        node_id: uuid.UUID | None,
         file_path: str,
+        install_id: uuid.UUID | None = None,
+        node_id: uuid.UUID | None = None,
         bypass_dupe_protection: bool = False,
     ) -> dict[str, str]:
         # Create a DB object
