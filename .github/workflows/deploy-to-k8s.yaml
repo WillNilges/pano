@@ -1,0 +1,67 @@
+name: Deploy to K8s
+permissions: read-all
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      image_digest:
+        required: true
+        type: string
+
+jobs:
+  deploy_to_k8s:
+    name: Deploy to k8s
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v4
+
+    - name: Install SSH key
+      uses: shimataro/ssh-key-action@d4fffb50872869abe2d9a9098a6d9c5aa7d16be4 # v2
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        name: id_ed25519 # optional
+        known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+        if_key_exists: fail # replace / ignore / fail; optional (defaults to fail)
+    
+    - name: Setup WireGuard
+      run:  |
+        sudo apt install wireguard
+        echo "${{ secrets.WIREGUARD_PRIVATE_KEY }}" > privatekey
+        sudo ip link add dev wg1 type wireguard
+        sudo ip address add dev wg1 ${{ secrets.WIREGUARD_OVERLAY_NETWORK_IP }} peer ${{ secrets.SSH_TARGET_IP }}
+        sudo wg set wg1 listen-port 48123 private-key privatekey peer ${{ secrets.WIREGUARD_PEER_PUBLIC_KEY }} allowed-ips 0.0.0.0/0 endpoint ${{ secrets.WIREGUARD_ENDPOINT }}
+        sudo ip link set up dev wg1
+        
+        # Ensure we can contact the target
+        ping ${{ secrets.SSH_TARGET_IP }} -w 4 || exit 1
+
+    - name: Deploy Helm Chart
+      run: |
+        # Get the kubeconfig
+        scp ${{ secrets.SSH_USER }}@${{ secrets.SSH_TARGET_IP }}:~/.kube/config ./
+
+        # Deploy Minio
+        helm upgrade --install --kubeconfig ./config --kube-apiserver https://${{ secrets.SSH_TARGET_IP }}:6443 --namespace pano --create-namespace minio infra/helm/minio \
+        --set minio.user='${{ secrets.MINIO_ROOT_USER }}' \
+        --set minio.password='${{ secrets.MINIO_ROOT_PASSWORD }}' || exit 1
+
+
+        # Install the chart with helm
+        helm upgrade --install --kubeconfig ./config --kube-apiserver https://${{ secrets.SSH_TARGET_IP }}:6443 --namespace pano --create-namespace pano infra/helm/pano \
+        --set pg.connection='${{ secrets.PG_CONN }}' \
+        --set minio.url='${{ vars.MINIO_URL }}' \
+        --set minio.access_key='${{ secrets.MINIO_ACCESS_KEY }}' \
+        --set minio.secret_key='${{ secrets.MINIO_SECRET_KEY }}' \
+        --set minio.bucket='${{ vars.MINIO_BUCKET }}' \
+        --set minio.is_secure='True' \
+        --set meshdb.endpoint='${{ vars.MESHDB_ENDPOINT }}' \
+        --set meshdb.token='${{ secrets.MESHDB_TOKEN }}' \
+        --set google.client_id='${{ secrets.GOOGLE_CLIENT_ID }}' \
+        --set google.client_secret='${{ secrets.GOOGMINIO_URLLE_CLIENT_SECRET}}' \
+        --set pano.redirect='${{ vars.PANO_FRONTEND_REDIRECT_URL }}' \
+        --set image.digest='${{ inputs.image_digest }}'

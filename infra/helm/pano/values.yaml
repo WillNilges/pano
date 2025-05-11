@@ -1,21 +1,15 @@
-# Default values for minio.
+# Default values for pano.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
 # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1
 
-minio:
-  pvc_name: "minio-pvc"
-  pvc_size: "20Gi"
-
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
-  repository: quay.io/minio/minio
+  repository: willnilges/pano
   # This sets the pull policy for images.
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: "RELEASE.2025-04-22T22-12-26Z"
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
@@ -40,7 +34,13 @@ serviceAccount:
 podAnnotations: {}
 # This is for setting Kubernetes Labels to a Pod.
 # For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-podLabels: {}
+podLabels:
+  app: pano
+
+pano:
+  selectorLabels:
+    app: pano
+
 
 podSecurityContext: {}
   # fsGroup: 2000
@@ -58,25 +58,19 @@ service:
   # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
   # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 9000
+  port: 80 # FIXME (wdn): Maybe we set this back to 8000?
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
   enabled: true
-  targetService: minio 
   className: "traefik"
   annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: devimg.nycmesh.net # This will get overridden. Set Values.ingress.hosts[0].host
+    - host: api.devpano.nycmesh.net # This will get overridden. Set Values.ingress.hosts[0].host
       paths:
         - path: /
           pathType: Prefix 
   tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
 
 resources:
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -85,20 +79,20 @@ resources:
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   limits:
     cpu: 2
-    memory: 2Gi
+    memory: 1Gi
   requests:
-    cpu: 1
+    cpu: 512m
     memory: 512Mi
 
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe:
   httpGet:
     path: /
-    port: 9001
+    port: http
 readinessProbe:
   httpGet:
     path: /
-    port: 9001
+    port: http
 
 # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:

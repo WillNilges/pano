@@ -23,6 +23,8 @@ class StorageMinio(Storage):
         self.bucket = bucket
         minio_secure = MINIO_SECURE
 
+        log.info(f"URL: {minio_url}, bucket: {bucket}, secure: {minio_secure}")
+
         # Create a client with the MinIO server playground, its access key
         # and secret key.
         self.client = Minio(
