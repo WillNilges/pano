@@ -57,9 +57,8 @@ jobs:
           GOOGLE_CLIENT_ID: test
           GOOGLE_CLIENT_SECRET: test
           PANO_FRONTEND_REDIRECT_URL: http://localhost:3000
-        run: pytest --cov --cov-report=xml:coverage.xml
+        run: pytest --cov #--cov-report=xml:coverage.xml
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@e0b68c6749509c5f83f984dd99a76a1c1a231044 # v4.0.1
+        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.6.2
         with:
-          files: coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
