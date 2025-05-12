@@ -6,6 +6,9 @@ A dummy-simple API in front of MinIO for storing and accessing panoramas in Mesh
   <img height="300px" src="https://github.com/user-attachments/assets/692fabb1-4b7c-4392-9731-604ebdf95af1" alt="Oxford the Grabbit">
 </p>
 
+<a href="https://codecov.io/github/WillNilges/pano" > 
+ <img src="https://codecov.io/github/WillNilges/pano/graph/badge.svg?token=M51PLA57H7"/> 
+ </a>
 
 # Schema
 
