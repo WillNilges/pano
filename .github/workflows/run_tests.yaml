@@ -57,7 +57,7 @@ jobs:
           GOOGLE_CLIENT_ID: test
           GOOGLE_CLIENT_SECRET: test
           PANO_FRONTEND_REDIRECT_URL: http://localhost:3000
-        run: pytest --cov .
+        run: pytest --cov src
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.6.2
         with:
