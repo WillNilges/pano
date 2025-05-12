@@ -3,7 +3,7 @@
 A dummy-simple API in front of MinIO for storing and accessing panoramas in MeshDB.
 
 <p align="center">
-  <img height="300px" src="https://github.com/user-attachments/assets/692fabb1-4b7c-4392-9731-604ebdf95af1" alt="Oxford the Grabbit">
+  <img height="300px" src="https://github.com/user-attachments/assets/692fabb1-4b7c-4392-9731-604ebdf95af1" alt="Pano Logo">
 </p>
 
 <a href="https://codecov.io/github/WillNilges/pano" > 
