@@ -10,7 +10,6 @@ from storage_minio import StorageMinio
 from .test_pano import SAMPLE_IMAGE_PATH
 
 
-@unittest.skip(reason="Broken and outdated test")
 class TestStorageMinio(unittest.TestCase):
     bucket_name = "test-bucket"
 
