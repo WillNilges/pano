@@ -61,6 +61,6 @@ jobs:
         --set meshdb.endpoint='${{ vars.MESHDB_ENDPOINT }}' \
         --set meshdb.token='${{ secrets.MESHDB_TOKEN }}' \
         --set google.client_id='${{ secrets.GOOGLE_CLIENT_ID }}' \
-        --set google.client_secret='${{ secrets.GOOGMINIO_URLLE_CLIENT_SECRET}}' \
+        --set google.client_secret='${{ secrets.GOOGLE_CLIENT_SECRET}}' \
         --set pano.redirect='${{ vars.PANO_FRONTEND_REDIRECT_URL }}' \
         --set image.digest='${{ inputs.image_digest }}'
