@@ -38,11 +38,13 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1000 * 1000
 app.config["SECRET_KEY"] = "chomskz"
 
-allowed_origins = {"origins": [
-    "http://127.0.0.1:3000",
-    "https://pano.nycmesh.net",
-    "https://devpano.nycmesh.net",
-]}
+allowed_origins = {
+    "origins": [
+        "http://127.0.0.1:3000",
+        "https://pano.nycmesh.net",
+        "https://devpano.nycmesh.net",
+    ]
+}
 
 CORS(
     app,
@@ -93,18 +95,21 @@ def query_images(install_number: int | None = None, network_number: int | None =
         j = jsonify(
             pano.get_images(
                 install_number=int(install_number) if install_number else None,
-                network_number=int(network_number) if network_number else None
+                network_number=int(network_number) if network_number else None,
             )
         )
         return j, 200
     except ValueError:
-        error = f"{install_number if install_number else network_number} is not an integer."
+        error = (
+            f"{install_number if install_number else network_number} is not an integer."
+        )
         logging.exception(error)
         return {"detail": error}, 400
     except NotFoundException:
         error = f"Could not find {install_number if install_number else network_number}. Consult MeshDB to make sure the object exists."
         logging.exception(error)
         return {"detail": error}, 404
+
 
 @app.route("/api/v1/update", methods=["POST"])
 @login_required
