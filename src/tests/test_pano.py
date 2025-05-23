@@ -1,9 +1,10 @@
 import unittest
 from pathlib import PurePosixPath
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 import uuid
 
 from pymeshdb.models.building import Building
+from pymeshdb.models.install import Install
 from sqlalchemy.orm import Session
 
 from db import PanoDB
@@ -30,7 +31,6 @@ SAMPLE_IMAGE_PATH_2 = "./src/tests/sample_images/logo.jpg"
 UUID_1 = uuid.uuid4()
 UUID_2 = uuid.uuid4()
 
-@unittest.skip(reason="Broken and outdated test")
 class TestPanoDB(unittest.TestCase):
     @patch("meshdb_client.MeshdbClient")
     @patch("minio.Minio")
@@ -107,20 +107,25 @@ class TestPanoDB(unittest.TestCase):
             SAMPLE_BUILDING,
         ]
 
-        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
-        self.assertIsNone(r)
+        mock_install = MagicMock()
+        mock_install.id = str(UUID_1)
+        mock_install.chom = "skz"
+        self.meshdb.get_install.return_value = mock_install
 
-        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH_2, UUID_2)
-        self.assertIsNone(r)
+        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
+        self.assertEqual({}, r)
+
+        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH_2, UUID_1)
+        self.assertEqual({}, r)
 
         all_images = self.pano.get_images(1)
 
         self.assertEqual(2, len(all_images))
 
-        self.assertEqual(1, all_images[0]["install_number"])
-        self.assertEqual(-1, all_images[0]["order"])
+        self.assertEqual(UUID_1, all_images[0]["install_id"])
+        self.assertEqual(None, all_images[0]["node_id"])
         self.assertEqual("pano.png", all_images[0]["original_filename"])
 
-        self.assertEqual(1, all_images[1]["install_number"])
-        self.assertEqual(-1, all_images[1]["order"])
+        self.assertEqual(UUID_1, all_images[1]["install_id"])
+        self.assertEqual(None, all_images[1]["node_id"])
         self.assertEqual("logo.jpg", all_images[1]["original_filename"])
