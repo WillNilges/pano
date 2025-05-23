@@ -42,7 +42,7 @@ jobs:
       - name: "Upgrade pip"
         run: "pip install --upgrade pip"
       - name: "Install package"
-        run: pip install ".[dev]"
+        run: pip install -e ".[dev]"
       - name: Run Tests
         env:
           PG_CONN: postgresql+psycopg://nycmesh:abcd1234@localhost:5432/nycmesh-dev
