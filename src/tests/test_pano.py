@@ -48,8 +48,12 @@ class TestPanoDB(unittest.TestCase):
     def test_handle_upload(self):
         self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING]
 
+        mock_install = MagicMock()
+        mock_install.id = str(UUID_1)
+        self.meshdb.get_install.return_value = mock_install
+
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
-        self.assertIsNone(r)
+        self.assertEqual({}, r)
 
         self.assertEqual(1, len(self.pano.get_images(1)))
 
@@ -60,7 +64,7 @@ class TestPanoDB(unittest.TestCase):
         ]
 
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
-        self.assertIsNone(r)
+        self.assertEqual({}, r)
 
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
 
@@ -82,10 +86,14 @@ class TestPanoDB(unittest.TestCase):
             SAMPLE_BUILDING,
         ]
 
+        mock_install = MagicMock()
+        mock_install.id = str(UUID_1)
+        self.meshdb.get_install.return_value = mock_install
+
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1, bypass_dupe_protection=True)
-        self.assertIsNone(r)
+        self.assertEqual({}, r)
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1, bypass_dupe_protection=True)
-        self.assertIsNone(r)
+        self.assertEqual({}, r)
 
         # Make sure there are two records in the DB
         self.assertEqual(2, len(self.pano.get_images(1)))
@@ -109,7 +117,6 @@ class TestPanoDB(unittest.TestCase):
 
         mock_install = MagicMock()
         mock_install.id = str(UUID_1)
-        mock_install.chom = "skz"
         self.meshdb.get_install.return_value = mock_install
 
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
