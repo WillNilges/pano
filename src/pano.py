@@ -34,7 +34,9 @@ class Pano:
             serialized_images[image.install_id].append(i)
         return serialized_images
 
-    def get_images(self, install_number: int | None = None, network_number: int | None = None) -> list[dict]:
+    def get_images(
+        self, install_number: int | None = None, network_number: int | None = None
+    ) -> list[dict]:
         install_id = None
         node_id = None
 

@@ -4,9 +4,10 @@ import uuid
 from sqlalchemy.orm import Session
 
 from db import PanoDB
-from models.image import Image 
+from models.image import Image
 from storage_minio import StorageMinio
 from .sample_data import SAMPLE_IMAGE_PATH
+
 
 class TestImage(unittest.TestCase):
     def setUp(self) -> None:
