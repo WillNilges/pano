@@ -4,14 +4,14 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 
 class Panorama(Image):
-    order: Mapped[int] = mapped_column()
+    order: Mapped[int] = mapped_column(nullable=True)
 
     def __init__(
         self,
         path: str,
         install_id: uuid.UUID | None = None,
         node_id: uuid.UUID | None = None,
+        public: bool = True,
     ):
         self.order = 0
-        self.public = True  # Panoramas are public by default
-        super().__init__(path, install_id, node_id)
+        super().__init__(path, install_id, node_id, public)

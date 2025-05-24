@@ -32,7 +32,7 @@ UUID_1 = uuid.UUID("8d2d5a8a-2941-433d-abc6-259b1b02e290")
 UUID_2 = uuid.UUID("b67bd7ba-a362-4d9c-931f-4ad2e9b33aed")
 
 
-class TestPanoDB(unittest.TestCase):
+class TestPano(unittest.TestCase):
     @patch("meshdb_client.MeshdbClient")
     @patch("minio.Minio")
     def setUp(self, minio, meshdb):
