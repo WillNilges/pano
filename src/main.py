@@ -82,6 +82,10 @@ class IdResolutionError(Exception):
 @app.route("/api/v1/image/<image_id>")
 def get_image_by_image_id(image_id: uuid.UUID):
     image = pano.db.get_image(image_id)
+    if not image:
+        error = f"Image {image_id} not found."
+        log.error(error)
+        return {"detail": error}, 404
     i = dataclasses.asdict(image)
     i["url"] = pano.storage.get_presigned_url(image)
 
