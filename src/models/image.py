@@ -36,9 +36,11 @@ class Image(Base):
         path: str,
         install_id: uuid.UUID | None = None,
         node_id: uuid.UUID | None = None,
+        public: bool = False,
     ):
         self.id = uuid.uuid4()
         self.timestamp = datetime.now()  # TODO: Extract from image metadata
+        self.public = public
 
         # The constraint should save us here but why not add redundancy
         if install_id and node_id:

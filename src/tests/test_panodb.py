@@ -6,10 +6,9 @@ from sqlalchemy.orm import Session
 from db import PanoDB
 from models.base import Base
 from models.image import Image
-from .test_pano import SAMPLE_IMAGE_PATH
+from .test_pano import SAMPLE_IMAGE_PATH, UUID_1
 
 
-@unittest.skip(reason="Broken and outdated test")
 class TestPanoDB(unittest.TestCase):
     def setUp(self):
         self.db = PanoDB("sqlite:///:memory:")
@@ -17,8 +16,7 @@ class TestPanoDB(unittest.TestCase):
         self.session = Session(self.db.engine)
         self.image = Image(
             path=SAMPLE_IMAGE_PATH,
-            install_number=1,
-            category=ImageCategory.panorama,
+            install_id=UUID_1,
         )
         self.session.add(self.image)
         self.session.commit()

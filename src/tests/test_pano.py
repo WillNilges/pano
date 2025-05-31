@@ -1,9 +1,10 @@
 import unittest
 from pathlib import PurePosixPath
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 import uuid
 
 from pymeshdb.models.building import Building
+from pymeshdb.models.install import Install
 from sqlalchemy.orm import Session
 
 from db import PanoDB
@@ -27,17 +28,21 @@ SAMPLE_BUILDING = Building(
 SAMPLE_IMAGE_PATH = "./src/tests/sample_images/pano.png"
 SAMPLE_IMAGE_PATH_2 = "./src/tests/sample_images/logo.jpg"
 
-UUID_1 = uuid.uuid4()
-UUID_2 = uuid.uuid4()
+UUID_1 = uuid.UUID("8d2d5a8a-2941-433d-abc6-259b1b02e290")
+UUID_2 = uuid.UUID("b67bd7ba-a362-4d9c-931f-4ad2e9b33aed")
 
-@unittest.skip(reason="Broken and outdated test")
-class TestPanoDB(unittest.TestCase):
+
+class TestPano(unittest.TestCase):
     @patch("meshdb_client.MeshdbClient")
     @patch("minio.Minio")
     def setUp(self, minio, meshdb):
         self.db = PanoDB("sqlite:///:memory:")
         self.minio = minio
         self.meshdb = meshdb
+
+        mock_install = MagicMock()
+        mock_install.id = str(UUID_1)
+        self.meshdb.get_install.return_value = mock_install
 
         self.session = Session(self.db.engine)
         self.pano = Pano(meshdb=self.meshdb, storage=self.minio, db=self.db)
@@ -49,18 +54,26 @@ class TestPanoDB(unittest.TestCase):
         self.meshdb.get_primary_building_for_install.side_effect = [SAMPLE_BUILDING]
 
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
-        self.assertIsNone(r)
+        self.assertEqual({}, r)
 
         self.assertEqual(1, len(self.pano.get_images(1)))
 
-    def test_handle_duplicate_upload(self):
+    @patch("models.image.uuid")
+    def test_handle_duplicate_upload(self, mock_uuid):
         self.meshdb.get_primary_building_for_install.side_effect = [
             SAMPLE_BUILDING,
             SAMPLE_BUILDING,
         ]
 
+        mock_uuid_value = uuid.UUID("e67603a5-2509-4683-add5-8ffdbbd56f1d")
+        mock_uuid.uuid4.return_value = mock_uuid_value
+
+        self.minio.get_presigned_url.return_value = (
+            f"http://{MINIO_URL}/panoramas/{mock_uuid_value}"
+        )
+
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
-        self.assertIsNone(r)
+        self.assertEqual({}, r)
 
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
 
@@ -70,7 +83,7 @@ class TestPanoDB(unittest.TestCase):
             {
                 PurePosixPath(
                     SAMPLE_IMAGE_PATH
-                ).name: f"http://{MINIO_URL}/panoramas/1/{all_images[0]['id']}"
+                ).name: f"http://{MINIO_URL}/panoramas/{all_images[0]['id']}"
             },
             r,
         )
@@ -82,10 +95,14 @@ class TestPanoDB(unittest.TestCase):
             SAMPLE_BUILDING,
         ]
 
-        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1, bypass_dupe_protection=True)
-        self.assertIsNone(r)
-        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1, bypass_dupe_protection=True)
-        self.assertIsNone(r)
+        r = self.pano.handle_upload(
+            SAMPLE_IMAGE_PATH, UUID_1, bypass_dupe_protection=True
+        )
+        self.assertEqual({}, r)
+        r = self.pano.handle_upload(
+            SAMPLE_IMAGE_PATH, UUID_1, bypass_dupe_protection=True
+        )
+        self.assertEqual({}, r)
 
         # Make sure there are two records in the DB
         self.assertEqual(2, len(self.pano.get_images(1)))
@@ -108,19 +125,19 @@ class TestPanoDB(unittest.TestCase):
         ]
 
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
-        self.assertIsNone(r)
+        self.assertEqual({}, r)
 
-        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH_2, UUID_2)
-        self.assertIsNone(r)
+        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH_2, UUID_1)
+        self.assertEqual({}, r)
 
         all_images = self.pano.get_images(1)
 
         self.assertEqual(2, len(all_images))
 
-        self.assertEqual(1, all_images[0]["install_number"])
-        self.assertEqual(-1, all_images[0]["order"])
+        self.assertEqual(UUID_1, all_images[0]["install_id"])
+        self.assertEqual(None, all_images[0]["node_id"])
         self.assertEqual("pano.png", all_images[0]["original_filename"])
 
-        self.assertEqual(1, all_images[1]["install_number"])
-        self.assertEqual(-1, all_images[1]["order"])
+        self.assertEqual(UUID_1, all_images[1]["install_id"])
+        self.assertEqual(None, all_images[1]["node_id"])
         self.assertEqual("logo.jpg", all_images[1]["original_filename"])
