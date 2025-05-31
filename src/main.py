@@ -94,7 +94,7 @@ def get_image_by_image_id(image_id: uuid.UUID):
 
 @app.route("/api/v1/install/<install_number>")
 @app.route("/api/v1/nn/<network_number>")
-def query_images(install_number: int | None = None, network_number: int | None = None):
+def get_images_by_meshdb_object(install_number: int | None = None, network_number: int | None = None):
     try:
         j = jsonify(
             pano.get_images(
