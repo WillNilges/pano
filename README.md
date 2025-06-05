@@ -81,3 +81,32 @@ Get a token by using jwt with your client name
 The API Token needs Read Only, and the ability to `Change Building`
 
 If you're getting 403's, check that you ran `create_groups` in your MeshDB Dev enviornment.
+
+## Garage Setup
+
+Garage has a slightly more involved setup than MinIO (whom we migrated off of due to MinIO becoming hostile to open source)
+
+https://garagehq.deuxfleurs.fr/documentation/quick-start/
+
+1. Stand up Garage with this command
+
+```
+docker compose -f dev/docker-compose.yml up -d garage
+```
+
+2. Get your node ID with this command
+
+_Note that your container name might be different. Fetch it with `docker ps`
+
+```
+docker exec -it pano-dev-garage-1 /garage status
+```
+
+3. Finally, apply a layout
+
+```
+garage layout assign -z dc1 -c 1G <node_id>
+docker exec -it pano-dev-garage-1 /garage layout apply --version 1
+```
+
+
