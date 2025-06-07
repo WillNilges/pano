@@ -40,7 +40,7 @@ spec:
         - mountPath: {{ .mount_path }}
           name: {{ .pvc_name }}-vol
         {{- end }}
-        - mountPath: /etc/
+        - mountPath: /etc/garage.toml
           name: garage-toml
           readOnly: true
       volumes:
