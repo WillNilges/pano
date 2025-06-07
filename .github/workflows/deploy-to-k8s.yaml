@@ -47,8 +47,8 @@ jobs:
 
         # Deploy Minio
         helm upgrade --install --kubeconfig ./config --kube-apiserver https://${{ secrets.SSH_TARGET_IP }}:6443 --namespace pano --create-namespace garage infra/helm/garage \
-        --set garage.user='${{ secrets.MINIO_ROOT_USER }}' \
-        --set garage.password='${{ secrets.MINIO_ROOT_PASSWORD }}' 
+        --set garage.user='${{ secrets.GARAGE_ROOT_USER }}' \
+        --set garage.password='${{ secrets.GARAGE_ROOT_PASSWORD }}' \
         --set garage.rpc_secret='${{ secrets.GARAGE_RPC_SECRET }}' \
         --set garage.admin_token='${{ secrets.GARAGE_ADMIN_TOKEN }}' \
         --set garage.metrics_token='${{ secrets.GARAGE_METRICS_TOKEN }}' || exit 1
@@ -56,10 +56,10 @@ jobs:
         # Install the chart with helm
         helm upgrade --install --kubeconfig ./config --kube-apiserver https://${{ secrets.SSH_TARGET_IP }}:6443 --namespace pano --create-namespace pano infra/helm/pano \
         --set pg.connection='${{ secrets.PG_CONN }}' \
-        --set garage.url='${{ vars.MINIO_URL }}' \
-        --set garage.access_key='${{ secrets.MINIO_ACCESS_KEY }}' \
-        --set garage.secret_key='${{ secrets.MINIO_SECRET_KEY }}' \
-        --set garage.bucket='${{ vars.MINIO_BUCKET }}' \
+        --set garage.url='${{ vars.GARAGE_URL }}' \
+        --set garage.access_key='${{ secrets.GARAGE_API_KEY }}' \
+        --set garage.secret_key='${{ secrets.GARAGE_SECRET }}' \
+        --set garage.bucket='${{ vars.GARAGE_BUCKET }}' \
         --set garage.is_secure='True' \
         --set meshdb.endpoint='${{ vars.MESHDB_ENDPOINT }}' \
         --set meshdb.token='${{ secrets.MESHDB_TOKEN }}' \

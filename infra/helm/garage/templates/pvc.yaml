@@ -1,12 +1,15 @@
+{{- range .Values.garage.pvc}}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.garage.pvc_name }}
-  namespace: {{ .Values.namespace }}
+  name: {{ .pvc_name }}
+  namespace: {{ $.Values.namespace }}
 spec:
   accessModes:
     - ReadWriteOnce
   storageClassName: longhorn
   resources:
     requests:
-      storage: {{ .Values.garage.pvc_size }}
+      storage: {{ .pvc_size }}
+---
+{{- end }}

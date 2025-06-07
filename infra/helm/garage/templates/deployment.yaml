@@ -35,44 +35,18 @@ spec:
       containers:
       - name: garage
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-        envFrom:
-        - secretRef:
-            name: garage-secrets
         volumeMounts:
-        - mountPath: /data
-          name: garage-data-vol # Corresponds to the `spec.volumes` Persistent Volume
+        {{- range .Values.garage.pvc }}
+        - mountPath: {{ .mount_path }}
+          name: {{ .pvc_name }}-vol
+        {{- end }}
       volumes:
-        - name: garage-data-vol
+        {{- range .Values.garage.pvc }}
+        - name: {{ .pvc_name }}-vol
           persistentVolumeClaim:
-            claimName: {{ .Values.garage.pvc_name }}
+            claimName: {{ .pvc_name }}
+        {{- end }}
 
-        #- name: {{ .Chart.Name }}
-        #  {{- with .Values.securityContext }}
-        #  securityContext:
-        #    {{- toYaml . | nindent 12 }}
-        #  {{- end }}
-        #  image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-        #  imagePullPolicy: {{ .Values.image.pullPolicy }}
-        #  ports:
-        #    - name: http
-        #      containerPort: {{ .Values.service.port }}
-        #      protocol: TCP
-        #  {{- with .Values.livenessProbe }}
-        #  livenessProbe:
-        #    {{- toYaml . | nindent 12 }}
-        #  {{- end }}
-        #  {{- with .Values.readinessProbe }}
-        #  readinessProbe:
-        #    {{- toYaml . | nindent 12 }}
-        #  {{- end }}
-        #  {{- with .Values.resources }}
-        #  resources:
-        #    {{- toYaml . | nindent 12 }}
-        #  {{- end }}
-        #  {{- with .Values.volumeMounts }}
-        #  volumeMounts:
-        #    {{- toYaml . | nindent 12 }}
-        #  {{- end }}
       {{- with .Values.volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}
