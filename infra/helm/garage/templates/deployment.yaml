@@ -11,7 +11,7 @@ spec:
   selector:
     matchLabels:
       {{- include "garage.selectorLabels" . | nindent 6 }}
-  podManagementPolicy: Ordered
+  podManagementPolicy: OrderedReady
   template:
     metadata:
       {{- with .Values.podAnnotations }}
