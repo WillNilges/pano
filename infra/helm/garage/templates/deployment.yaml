@@ -41,6 +41,7 @@ spec:
           name: {{ .pvc_name }}-vol
         {{- end }}
         - mountPath: /etc/garage.toml
+          subPath: garage.toml
           name: garage-toml
       volumes:
         {{- range .Values.garage.pvc }}
