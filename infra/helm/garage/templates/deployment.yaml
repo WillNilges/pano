@@ -35,11 +35,6 @@ spec:
       containers:
       - name: garage
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-        command:
-        - /bin/bash
-        - -c
-        args: 
-        - garage server /data --console-address ":9001"
         envFrom:
         - secretRef:
             name: garage-secrets

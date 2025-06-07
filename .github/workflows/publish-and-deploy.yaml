@@ -3,11 +3,11 @@ name: Publish and Deploy
 
 on:
   push:
-    branches: [ main, wdn/charts ]
+    branches: [ main, wdn/garage ]
   workflow_dispatch:
     branches:
       - main
-      - wdn/charts
+      - wdn/garage
 
 permissions: read-all
 
