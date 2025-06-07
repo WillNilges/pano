@@ -8,7 +8,7 @@ UPLOAD_DIRECTORY = f"{WORKING_DIRECTORY}/upload"
 
 PG_CONN = os.getenv("PG_CONN")
 
-garage_SECURE = False if os.environ["garage_SECURE"] == "False" else True
-garage_URL = os.environ["garage_URL"]
-garage_PUBLIC_URL = os.environ["garage_URL"]
-garage_BUCKET = os.environ["garage_BUCKET"]
+GARAGE_SECURE = False if os.environ["GARAGE_SECURE"] == "False" else True
+GARAGE_URL = os.environ["GARAGE_URL"]
+GARAGE_PUBLIC_URL = os.environ["GARAGE_URL"]
+GARAGE_BUCKET = os.environ["GARAGE_BUCKET"]
