@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "garage.fullname" . }}
   labels:
@@ -11,6 +11,7 @@ spec:
   selector:
     matchLabels:
       {{- include "garage.selectorLabels" . | nindent 6 }}
+  podManagementPolicy: Ordered
   template:
     metadata:
       {{- with .Values.podAnnotations }}

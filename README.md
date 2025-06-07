@@ -111,7 +111,7 @@ docker exec -it pano-dev-garage-1 /garage status
 3. Finally, apply a layout
 
 ```
-garage layout assign -z dc1 -c 1G <node_id>
+docker exec -it pano-dev-garage-1 /garage layout assign -z dc1 -c 1G <node_id>
 docker exec -it pano-dev-garage-1 /garage layout apply --version 1
 ```
 
