@@ -40,12 +40,18 @@ spec:
         - mountPath: {{ .mount_path }}
           name: {{ .pvc_name }}-vol
         {{- end }}
+        - mountPath: /etc/garage.toml
+          name: garage-toml
+          readOnly: true
       volumes:
         {{- range .Values.garage.pvc }}
         - name: {{ .pvc_name }}-vol
           persistentVolumeClaim:
             claimName: {{ .pvc_name }}
         {{- end }}
+        - name: garage-toml
+          secret:
+            secretName: garage-config
 
       {{- with .Values.volumes }}
       volumes:

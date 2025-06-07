@@ -47,8 +47,6 @@ jobs:
 
         # Deploy Minio
         helm upgrade --install --kubeconfig ./config --kube-apiserver https://${{ secrets.SSH_TARGET_IP }}:6443 --namespace pano --create-namespace garage infra/helm/garage \
-        --set garage.user='${{ secrets.GARAGE_ROOT_USER }}' \
-        --set garage.password='${{ secrets.GARAGE_ROOT_PASSWORD }}' \
         --set garage.rpc_secret='${{ secrets.GARAGE_RPC_SECRET }}' \
         --set garage.admin_token='${{ secrets.GARAGE_ADMIN_TOKEN }}' \
         --set garage.metrics_token='${{ secrets.GARAGE_METRICS_TOKEN }}' || exit 1

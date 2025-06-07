@@ -115,6 +115,11 @@ garage layout assign -z dc1 -c 1G <node_id>
 docker exec -it pano-dev-garage-1 /garage layout apply --version 1
 ```
 
+### Setup in Kube
+
+Garage needs you to create a key with its API, so you'll have to deploy it, then
+go in and create the API key, and _then_ set it in GitHub.
+
 ## Adding Env variables
 
 if you need to add an env var,
