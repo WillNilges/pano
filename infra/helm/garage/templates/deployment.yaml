@@ -50,8 +50,8 @@ spec:
             claimName: {{ .pvc_name }}
         {{- end }}
         - name: garage-toml
-          secret:
-            secretName: garage-config
+          configMap:
+            name: garage-config
 
       {{- with .Values.volumes }}
       volumes:
