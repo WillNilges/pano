@@ -42,7 +42,6 @@ spec:
         {{- end }}
         - mountPath: /etc/garage.toml
           name: garage-toml
-          readOnly: true
       volumes:
         {{- range .Values.garage.pvc }}
         - name: {{ .pvc_name }}-vol
