@@ -13,26 +13,26 @@ services:
       - pano-dev-postgres-data:/var/lib/postgresql/data
     networks:
       - pano-dev-network
-  minio:
-    container_name: pano-minio
-    image: quay.io/minio/minio
-    command: |
-      server /data --console-address ":9001"
+  garage:
+    image: dxflrs/garage:v1.1.0
+    restart: unless-stopped
     ports:
-      - 9000:9000
-      - 9001:9001
-    environment:
-      MINIO_ROOT_USER: pano-dev
-      MINIO_ROOT_PASSWORD: pano-dev
+      - 3900:3900
+      - 3901:3901
+      - 3902:3902
     volumes:
-      - pano-dev-minio-data:/data
+      - /home/wilnil/Code/nycmeshnet/pano/dev/garage.toml:/etc/garage.toml
+      - pano-dev-garage-meta:/var/lib/garage/meta
+      - pano-dev-garage-data:/var/lib/garage/data
     networks:
       - pano-dev-network
 volumes:
   pano-dev-postgres-data:
     name: pano-postgres-data
-  pano-dev-minio-data:
-    name: pano-minio-data
+  pano-dev-garage-meta:
+    name: pano-garage-meta
+  pano-dev-garage-data:
+    name: pano-garage-data
 networks:
   pano-dev-network:
     name: pano-dev-network

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.minio.pvc_name }}
+  name: {{ .Values.garage.pvc_name }}
   namespace: {{ .Values.namespace }}
 spec:
   accessModes:
@@ -9,4 +9,4 @@ spec:
   storageClassName: longhorn
   resources:
     requests:
-      storage: {{ .Values.minio.pvc_size }}
+      storage: {{ .Values.garage.pvc_size }}

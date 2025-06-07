@@ -18,20 +18,19 @@ class StorageMinio(Storage):
         log.info("Configuring Minio Storage...")
         # Get env vars like this so that we crash if they're missing
         minio_url = MINIO_URL
-        minio_access_key = os.environ["MINIO_ACCESS_KEY"]
-        minio_secret_key = os.environ["MINIO_SECRET_KEY"]
+        minio_access_key = os.environ["GARAGE_API_KEY"]
+        minio_secret_key = os.environ["GARAGE_SECRET"]
         self.bucket = bucket
         minio_secure = MINIO_SECURE
 
         log.info(f"URL: {minio_url}, bucket: {bucket}, secure: {minio_secure}")
 
-        # Create a client with the MinIO server playground, its access key
-        # and secret key.
         self.client = Minio(
             minio_url,
             access_key=minio_access_key,
             secret_key=minio_secret_key,
             secure=minio_secure,
+            region="garage"
         )
 
         # Make the bucket if it doesn't exist.
