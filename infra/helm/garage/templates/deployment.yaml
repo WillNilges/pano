@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "minio.fullname" . }}
+  name: {{ include "garage.fullname" . }}
   labels:
-    {{- include "minio.labels" . | nindent 4 }}
+    {{- include "garage.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "minio.selectorLabels" . | nindent 6 }}
+      {{- include "garage.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "minio.labels" . | nindent 8 }}
+        {{- include "garage.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -27,29 +27,29 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "minio.serviceAccountName" . }}
+      serviceAccountName: {{ include "garage.serviceAccountName" . }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-      - name: minio
+      - name: garage
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         command:
         - /bin/bash
         - -c
         args: 
-        - minio server /data --console-address ":9001"
+        - garage server /data --console-address ":9001"
         envFrom:
         - secretRef:
-            name: minio-secrets
+            name: garage-secrets
         volumeMounts:
         - mountPath: /data
-          name: minio-data-vol # Corresponds to the `spec.volumes` Persistent Volume
+          name: garage-data-vol # Corresponds to the `spec.volumes` Persistent Volume
       volumes:
-        - name: minio-data-vol
+        - name: garage-data-vol
           persistentVolumeClaim:
-            claimName: {{ .Values.minio.pvc_name }}
+            claimName: {{ .Values.garage.pvc_name }}
 
         #- name: {{ .Chart.Name }}
         #  {{- with .Values.securityContext }}

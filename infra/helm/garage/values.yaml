@@ -1,21 +1,17 @@
-# Default values for minio.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1
 
-minio:
-  pvc_name: "minio-pvc"
+garage:
+  pvc_name: "garage-pvc"
   pvc_size: "20Gi"
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
-  repository: quay.io/minio/minio
+  repository: dxflrs/garage
   # This sets the pull policy for images.
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "RELEASE.2025-04-22T22-12-26Z@sha256:a1ea29fa28355559ef137d71fc570e508a214ec84ff8083e39bc5428980b015e"
+  tag: "v1.1.0"
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
@@ -58,12 +54,12 @@ service:
   # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
   # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 9000
+  port: 3900
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
   enabled: true
-  targetService: minio 
+  targetService: garage
   className: "traefik"
   annotations: {}
     # kubernetes.io/ingress.class: nginx
@@ -94,11 +90,11 @@ resources:
 livenessProbe:
   httpGet:
     path: /
-    port: 9001
+    port: 3900
 readinessProbe:
   httpGet:
     path: /
-    port: 9001
+    port: 3900
 
 # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:
