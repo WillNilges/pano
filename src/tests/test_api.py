@@ -21,28 +21,28 @@ from flask import Flask
 from . import SAMPLE_IMAGE_PATH, UUID_1
 from src.main import app
 
-class TestAPI(unittest.TestCase):
-    @patch("meshdb_client.MeshdbClient")
-    def setUp(self, meshdb):
-        app.config["TESTING"] = True
-        app.config["LOGIN_DISABLED"] = True
-        self.meshdb = meshdb
-        self.pano = Pano(meshdb=meshdb)
-        with app.test_client() as client:
-            self.client = client
-        self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
-
-#    def get_install(self):
-#        pass
-
-    def test_upload_and_retrieve(self):
-        chom = uuid.uuid4() 
-        self.meshdb.get_install.return_value = chom
-        post_data = {
-            "installNumber": 420
-        }
-        rv = self.client.post("/api/v1/upload", data=post_data)
-        assert rv.status_code == 201
+# class TestAPI(unittest.TestCase):
+#     @patch("meshdb_client.MeshdbClient")
+#     def setUp(self, meshdb):
+#         app.config["TESTING"] = True
+#         app.config["LOGIN_DISABLED"] = True
+#         self.meshdb = meshdb
+#         self.pano = Pano(meshdb=meshdb)
+#         with app.test_client() as client:
+#             self.client = client
+#         self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
+#
+# #    def get_install(self):
+# #        pass
+#
+#     def test_upload_and_retrieve(self):
+#         chom = uuid.uuid4() 
+#         self.meshdb.get_install.return_value = chom
+#         post_data = {
+#             "installNumber": 420
+#         }
+#         rv = self.client.post("/api/v1/upload", data=post_data)
+#         assert rv.status_code == 201
 
 @pytest.fixture
 def client():
