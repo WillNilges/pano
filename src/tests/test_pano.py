@@ -69,7 +69,7 @@ class TestPano(unittest.TestCase):
         mock_uuid.uuid4.return_value = mock_uuid_value
 
         self.minio.get_presigned_url.return_value = (
-            f"http://{MINIO_URL}/panoramas/{mock_uuid_value}"
+            f"http://{GARAGE_URL}/panoramas/{mock_uuid_value}"
         )
 
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
