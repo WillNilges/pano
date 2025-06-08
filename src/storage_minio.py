@@ -25,6 +25,7 @@ class StorageMinio(Storage):
 
         log.info(f"URL: {minio_url}, bucket: {bucket}, secure: {minio_secure}")
         print(f"URL: {minio_url}, bucket: {bucket}, secure: {minio_secure}")
+        print(f"access key: {minio_access_key}, secret_key: {minio_secret_key}")
 
         self.client = Minio(
             minio_url,
