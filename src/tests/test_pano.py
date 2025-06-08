@@ -1,7 +1,7 @@
 import unittest
+import uuid
 from pathlib import PurePosixPath
 from unittest.mock import patch
-import uuid
 
 from pymeshdb.models.building import Building
 from sqlalchemy.orm import Session
@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from db import PanoDB
 from models.base import Base
 from pano import Pano
-from settings import MINIO_URL
 
 SAMPLE_BUILDING = Building(
     id="one",
