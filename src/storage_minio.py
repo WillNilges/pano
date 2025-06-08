@@ -37,6 +37,9 @@ class StorageMinio(Storage):
             region="garage",
         )
 
+        # Sanity check
+        log.info(f"I see these buckets: {self.client.list_buckets()}")
+
         # Make the bucket if it doesn't exist.
         if not self.client.bucket_exists(self.bucket):
             self.client.make_bucket(self.bucket)
