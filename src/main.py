@@ -38,11 +38,13 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1000 * 1000
 app.config["SECRET_KEY"] = "chomskz"
 
-allowed_origins = {"origins": [
-    "http://127.0.0.1:3000",
-    "https://pano.nycmesh.net",
-    "https://devpano.nycmesh.net",
-]}
+allowed_origins = {
+    "origins": [
+        "http://127.0.0.1:3000",
+        "https://pano.nycmesh.net",
+        "https://devpano.nycmesh.net",
+    ]
+}
 
 CORS(
     app,
@@ -80,6 +82,10 @@ class IdResolutionError(Exception):
 @app.route("/api/v1/image/<image_id>")
 def get_image_by_image_id(image_id: uuid.UUID):
     image = pano.db.get_image(image_id)
+    if not image:
+        error = f"Image {image_id} not found."
+        log.error(error)
+        return {"detail": error}, 404
     i = dataclasses.asdict(image)
     i["url"] = pano.storage.get_presigned_url(image)
 
@@ -88,23 +94,26 @@ def get_image_by_image_id(image_id: uuid.UUID):
 
 @app.route("/api/v1/install/<install_number>")
 @app.route("/api/v1/nn/<network_number>")
-def query_images(install_number: int | None = None, network_number: int | None = None):
+def get_images_by_meshdb_object(install_number: int | None = None, network_number: int | None = None):
     try:
         j = jsonify(
             pano.get_images(
                 install_number=int(install_number) if install_number else None,
-                network_number=int(network_number) if network_number else None
+                network_number=int(network_number) if network_number else None,
             )
         )
         return j, 200
     except ValueError:
-        error = f"{install_number if install_number else network_number} is not an integer."
+        error = (
+            f"{install_number if install_number else network_number} is not an integer."
+        )
         logging.exception(error)
         return {"detail": error}, 400
     except NotFoundException:
         error = f"Could not find {install_number if install_number else network_number}. Consult MeshDB to make sure the object exists."
         logging.exception(error)
         return {"detail": error}, 404
+
 
 @app.route("/api/v1/update", methods=["POST"])
 @login_required

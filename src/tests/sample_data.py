@@ -1,4 +1,3 @@
-
 import uuid
 from pymeshdb.models.building import Building
 
