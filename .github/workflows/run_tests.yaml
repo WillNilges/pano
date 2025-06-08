@@ -25,6 +25,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      # TODO: Replace with something that isn't malware
       minio:
         image: willnilges/minio-gh
         ports:
@@ -46,12 +47,11 @@ jobs:
       - name: Run Tests
         env:
           PG_CONN: postgresql+psycopg://nycmesh:abcd1234@localhost:5432/nycmesh-dev
-          MINIO_PUBLIC_URL: localhost:9000
-          MINIO_URL: localhost:9000
-          MINIO_ACCESS_KEY: test12345
-          MINIO_SECRET_KEY: test12345
-          MINIO_BUCKET: panoramas
-          MINIO_SECURE: "False"
+          GARAGE_URL: localhost:9000
+          GARAGE_API_KEY: test12345
+          GARAGE_SECRET: test12345
+          GARAGE_BUCKET: panoramas
+          GARAGE_SECURE: "False"
           MESHDB_ENDPOINT: http://localhost:8000
           MESHDB_TOKEN: test
           GOOGLE_CLIENT_ID: test
