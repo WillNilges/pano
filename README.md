@@ -140,3 +140,5 @@ if you need to add an env var,
 2. Add it to the `deploy-to-k8s.yaml` file under the appropriate deployment (pano or garage)
 
 3. Add it to the appropriate `configmap.yaml` or `secrets.yaml` file.
+
+_in kube, it will be port 80_

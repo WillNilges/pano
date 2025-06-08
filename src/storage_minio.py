@@ -21,18 +21,18 @@ class StorageMinio(Storage):
         log.info("Configuring Minio Storage...")
         # Get env vars like this so that we crash if they're missing
         garage_url = GARAGE_URL
-        minio_access_key = os.environ["GARAGE_API_KEY"]
-        minio_secret_key = os.environ["GARAGE_SECRET"]
+        garage_api_key = os.environ["GARAGE_API_KEY"]
+        garage_secret = os.environ["GARAGE_SECRET"]
+        log.info("Loaded credentials.")
+
         self.bucket = bucket
         minio_secure = GARAGE_SECURE
-
         log.info(f"URL: {garage_url}, bucket: {bucket}, secure: {minio_secure}")
-        log.info("Loaded credentials.")
 
         self.client = Minio(
             garage_url,
-            access_key=minio_access_key,
-            secret_key=minio_secret_key,
+            access_key=garage_api_key,
+            secret_key=garage_secret,
             secure=minio_secure,
             region="garage",
         )
@@ -46,6 +46,8 @@ class StorageMinio(Storage):
             log.info(f"Created bucket {self.bucket}")
         else:
             log.info(f"Bucket {self.bucket} already exists")
+
+        log.info("Ready.")
 
     def upload_objects(self, objects: dict[str, str]) -> None:
         for path, file in objects.items():
