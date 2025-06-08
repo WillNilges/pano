@@ -11,13 +11,5 @@ spec:
       targetPort: 3900
       protocol: TCP
       name: s3-api
-    - port: 3901
-      targetPort: 3901
-      protocol: TCP
-      name: s3-web
-    - port: 3902
-      targetPort: 3902
-      protocol: TCP
-      name: k2v-api
   selector:
     {{- include "garage.selectorLabels" . | nindent 4 }}
