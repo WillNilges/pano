@@ -10,6 +10,9 @@ from models.image import Image
 from settings import GARAGE_BUCKET, GARAGE_SECURE, GARAGE_URL, WORKING_DIRECTORY
 from storage import Storage
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 log = logging.getLogger("pano.storage_minio")
 
 
@@ -17,22 +20,21 @@ class StorageMinio(Storage):
     def __init__(self, bucket: str = GARAGE_BUCKET) -> None:
         log.info("Configuring Minio Storage...")
         # Get env vars like this so that we crash if they're missing
-        minio_url = GARAGE_URL
+        garage_url = GARAGE_URL
         minio_access_key = os.environ["GARAGE_API_KEY"]
         minio_secret_key = os.environ["GARAGE_SECRET"]
         self.bucket = bucket
         minio_secure = GARAGE_SECURE
 
-        log.info(f"URL: {minio_url}, bucket: {bucket}, secure: {minio_secure}")
-        print(f"URL: {minio_url}, bucket: {bucket}, secure: {minio_secure}")
-        print(f"access key: {minio_access_key}, secret_key: {minio_secret_key}")
+        log.info(f"URL: {garage_url}, bucket: {bucket}, secure: {minio_secure}")
+        log.info("Loaded credentials.")
 
         self.client = Minio(
-            minio_url,
+            garage_url,
             access_key=minio_access_key,
             secret_key=minio_secret_key,
             secure=minio_secure,
-            region="garage"
+            region="garage",
         )
 
         # Make the bucket if it doesn't exist.

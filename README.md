@@ -115,6 +115,17 @@ docker exec -it pano-dev-garage-1 /garage layout assign -z dc1 -c 1G <node_id>
 docker exec -it pano-dev-garage-1 /garage layout apply --version 1
 ```
 
+4. Also don't forget to let your key talk to the bucket
+
+```
+dev3 -n pano exec -it garage-0 -- /garage bucket allow \
+  --read \
+  --write \
+  --owner \
+  pano \
+  --key pano-app-key
+```
+
 ### Setup in Kube
 
 Garage needs you to create a key with its API, so you'll have to deploy it, then
