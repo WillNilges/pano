@@ -5,6 +5,8 @@ import shutil
 import uuid
 from datetime import timedelta
 
+import argparse
+
 import pymeshdb
 from pymeshdb.exceptions import NotFoundException
 from authlib.integrations.flask_client import OAuth
@@ -205,8 +207,9 @@ def upload():
             # Ensure that the upload directory exists
             try:
                 os.makedirs(UPLOAD_DIRECTORY)
-            except:
-                pass
+            except Exception as e:
+                logging.exception("Could not create upload directory.")
+                return {"detail": "Something went wrong processing this panorama upload."}, 500
             # Save the file to local storage
             file_path = os.path.join(UPLOAD_DIRECTORY, filename)
             file.save(file_path)
@@ -224,7 +227,7 @@ def upload():
                     continue
             except ValueError as e:
                 logging.exception(
-                    "Something went wrong processing this panorama upload"
+                    "Error processing this panorama upload"
                 )
                 return {
                     "detail": "Something went wrong processing this panorama upload"
