@@ -204,14 +204,15 @@ def upload():
         if file and allowed_file(file.filename):
             # Sanitize input
             filename = secure_filename(file.filename)
+
             # Ensure that the upload directory exists
-            try:
-                os.makedirs(UPLOAD_DIRECTORY)
-            except:
-                # This will raise an exception if it exists. We don't care.
-                # FIXME (wdn): What if for some reason the directory fails
-                # to be created?
-                pass
+            if not os.path.exists(UPLOAD_DIRECTORY):
+                try:
+                    os.makedirs(UPLOAD_DIRECTORY)
+                except:
+                    log.error(f"Could not create {UPLOAD_DIRECTORY}")
+                    return {"detail": "There was a problem processing your upload."}, 500
+
             # Save the file to local storage
             file_path = os.path.join(UPLOAD_DIRECTORY, filename)
             file.save(file_path)

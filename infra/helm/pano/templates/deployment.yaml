@@ -58,6 +58,10 @@ spec:
           {{- end }}
           {{- with .Values.volumeMounts }}
           volumeMounts:
+            {{- range .Values.pano.pvc }}
+            - mountPath: {{ .mount_path }}
+              name: {{ .pvc_name }}-vol
+            {{- end }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           envFrom:
@@ -67,6 +71,11 @@ spec:
                 name: pano-secrets
       {{- with .Values.volumes }}
       volumes:
+        {{- range .Values.pano.pvc }}
+        - name: {{ .pvc_name }}-vol
+          persistentVolumeClaim:
+            claimName: {{ .pvc_name }}
+        {{- end }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}

@@ -40,7 +40,10 @@ podLabels:
 pano:
   selectorLabels:
     app: pano
-
+  pvc:
+    - pvc_name: "node-db"
+      pvc_size: "30Gi"
+      mount_path: /var/lib/pano/node-db
 
 podSecurityContext: {}
   # fsGroup: 2000
