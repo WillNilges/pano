@@ -45,6 +45,7 @@ allowed_origins = {
         "http://127.0.0.1:3000",
         "https://pano.nycmesh.net",
         "https://devpano.nycmesh.net",
+        "https://api.devpano.nycmesh.net",
     ]
 }
 

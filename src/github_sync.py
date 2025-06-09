@@ -39,7 +39,7 @@ def manage_repo(repo_path, repo_url):
         try:
             # Clone the repository since it does not exist
             print(f"Cloning repository from {repo_url} to {repo_path}...")
-            Repo.clone_from(repo_url, repo_path, progress=CloneProgress())
+            Repo.clone_from(repo_url, repo_path)#, progress=CloneProgress())
             print("Repository cloned successfully.")
         except GitCommandError as e:
             print(f"Error while cloning the repository: {e}")
@@ -112,10 +112,13 @@ def github_sync():
             logging.info(f"Successfully resolved install# {install_number} to install_id {install_id}")
 
         if args.write:
-            pano.handle_upload(
-                f"{repo_path}/data/panoramas/{file_name}", install_id, node_id, False 
-            )
-            logging.info("Write successful.")
+            try:
+                pano.handle_upload(
+                    f"{repo_path}/data/panoramas/{file_name}", install_id, node_id, False 
+                )
+                logging.info("Write successful.")
+            except Exception:
+                logging.exception("Could not save panorama.")
 
 if __name__ == "__main__":
     github_sync()
