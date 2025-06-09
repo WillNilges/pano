@@ -22,13 +22,13 @@ class PanoDB:
             session.delete(result)
             session.commit()
 
-    def get_image(self, id: uuid.UUID) -> Image | None:
+    def get_image(self, id: uuid.UUID | None=None, original_filename: str | None=None) -> Image | None:
         with Session(self.engine, expire_on_commit=False) as session:
-            statement = select(Image).filter_by(id=id)
+            statement = select(Image).filter_by(id=id) if id else select(Image).filter_by(original_filename=original_filename)
             row = session.execute(statement).first()
             if row:
                 return row[0]
-            logging.warning(f"Could not find image with id {id}")
+            #logging.warning(f"Could not find image. id={id}, original_filename={original_filename}")
             return None
 
     def get_images(

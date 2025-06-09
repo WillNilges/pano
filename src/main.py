@@ -207,9 +207,11 @@ def upload():
             # Ensure that the upload directory exists
             try:
                 os.makedirs(UPLOAD_DIRECTORY)
-            except Exception as e:
-                logging.exception("Could not create upload directory.")
-                return {"detail": "Something went wrong processing this panorama upload."}, 500
+            except:
+                # This will raise an exception if it exists. We don't care.
+                # FIXME (wdn): What if for some reason the directory fails
+                # to be created?
+                pass
             # Save the file to local storage
             file_path = os.path.join(UPLOAD_DIRECTORY, filename)
             file.save(file_path)
