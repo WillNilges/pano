@@ -55,6 +55,10 @@ def github_sync():
         epilog='Chom E :)'
     )
 
+    parser.add_argument('-w', '--write', action="store_true")
+
+    args = parser.parse_args()
+
     repo_path = os.environ.get("NODE_DB_REPO_PATH")
     if not repo_path:
         log.error("Please specify NODE_DB_REPO_PATH in the environment.")
@@ -107,9 +111,11 @@ def github_sync():
             install_id = uuid.UUID(install.id)
             logging.info(f"Successfully resolved install# {install_number} to install_id {install_id}")
 
-        pano.handle_upload(
-            f"{repo_path}/data/panoramas/{file_name}", install_id, node_id, False 
-        )
+        if args.write:
+            pano.handle_upload(
+                f"{repo_path}/data/panoramas/{file_name}", install_id, node_id, False 
+            )
+            logging.info("Write successful.")
 
 if __name__ == "__main__":
     github_sync()
