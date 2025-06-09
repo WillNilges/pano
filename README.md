@@ -1,6 +1,6 @@
 # Pano
 
-A dummy-simple API in front of MinIO for storing and accessing panoramas in MeshDB.
+A dummy-simple API in front of garage for storing and accessing panoramas in MeshDB.
 
 <p align="center">
   <img height="300px" src="https://github.com/user-attachments/assets/692fabb1-4b7c-4392-9731-604ebdf95af1" alt="Pano Logo">
@@ -9,6 +9,12 @@ A dummy-simple API in front of MinIO for storing and accessing panoramas in Mesh
 <a href="https://codecov.io/github/WillNilges/pano" > 
  <img src="https://codecov.io/github/WillNilges/pano/graph/badge.svg?token=M51PLA57H7"/> 
  </a>
+
+# Running
+
+```
+gunicorn main:app -b 0.0.0.0:8081
+```
 
 # Schema
 
@@ -34,7 +40,7 @@ Node Table, seen from: {uuid, uuid, uuid...}
 
 # S3
 
-We use MinIO to store images as objects. The schema for the path that identifies
+We use garage to store images as objects. The schema for the path that identifies
 a particular object is very simple:
 
 `/<bucket name>/<install_number>/<uuid>`
@@ -81,3 +87,58 @@ Get a token by using jwt with your client name
 The API Token needs Read Only, and the ability to `Change Building`
 
 If you're getting 403's, check that you ran `create_groups` in your MeshDB Dev enviornment.
+
+## Garage Setup
+
+Garage has a slightly more involved setup than garage (whom we migrated off of due to garage becoming hostile to open source)
+
+https://garagehq.deuxfleurs.fr/documentation/quick-start/
+
+1. Stand up Garage with this command
+
+```
+docker compose -f dev/docker-compose.yml up -d garage
+```
+
+2. Get your node ID with this command
+
+_Note that your container name might be different. Fetch it with `docker ps`
+
+```
+docker exec -it pano-dev-garage-1 /garage status
+```
+
+3. Finally, apply a layout
+
+```
+docker exec -it pano-dev-garage-1 /garage layout assign -z dc1 -c 1G <node_id>
+docker exec -it pano-dev-garage-1 /garage layout apply --version 1
+```
+
+4. Also don't forget to let your key talk to the bucket
+
+```
+dev3 -n pano exec -it garage-0 -- /garage bucket allow \
+  --read \
+  --write \
+  --owner \
+  pano \
+  --key pano-app-key
+```
+
+### Setup in Kube
+
+Garage needs you to create a key with its API, so you'll have to deploy it, then
+go in and create the API key, and _then_ set it in GitHub.
+
+## Adding Env variables
+
+if you need to add an env var,
+
+1. Add it to the Environment on Github as either a secret or a value
+
+2. Add it to the `deploy-to-k8s.yaml` file under the appropriate deployment (pano or garage)
+
+3. Add it to the appropriate `configmap.yaml` or `secrets.yaml` file.
+
+_in kube, it will be port 80_

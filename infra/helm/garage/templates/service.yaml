@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "garage.fullname" . }}
+  labels:
+    {{- include "garage.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 3900
+      targetPort: 3900
+      protocol: TCP
+      name: s3-api
+  selector:
+    {{- include "garage.selectorLabels" . | nindent 4 }}

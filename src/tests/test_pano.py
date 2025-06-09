@@ -1,7 +1,7 @@
 import unittest
+import uuid
 from pathlib import PurePosixPath
 from unittest.mock import MagicMock, patch
-import uuid
 
 from pymeshdb.models.building import Building
 from pymeshdb.models.install import Install
@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from db import PanoDB
 from models.base import Base
 from pano import Pano
-from settings import MINIO_URL
+from settings import GARAGE_URL
 
 SAMPLE_BUILDING = Building(
     id="one",
@@ -69,7 +69,7 @@ class TestPano(unittest.TestCase):
         mock_uuid.uuid4.return_value = mock_uuid_value
 
         self.minio.get_presigned_url.return_value = (
-            f"http://{MINIO_URL}/panoramas/{mock_uuid_value}"
+            f"http://{GARAGE_URL}/panoramas/{mock_uuid_value}"
         )
 
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
@@ -83,7 +83,7 @@ class TestPano(unittest.TestCase):
             {
                 PurePosixPath(
                     SAMPLE_IMAGE_PATH
-                ).name: f"http://{MINIO_URL}/panoramas/{all_images[0]['id']}"
+                ).name: f"http://{GARAGE_URL}/panoramas/1/{all_images[0]['id']}"
             },
             r,
         )

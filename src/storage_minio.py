@@ -7,32 +7,38 @@ from minio import Minio
 from wand.image import Image as WandImage
 
 from models.image import Image
-from settings import MINIO_BUCKET, MINIO_SECURE, MINIO_URL, WORKING_DIRECTORY
+from settings import GARAGE_BUCKET, GARAGE_SECURE, GARAGE_URL, WORKING_DIRECTORY
 from storage import Storage
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 log = logging.getLogger("pano.storage_minio")
 
 
 class StorageMinio(Storage):
-    def __init__(self, bucket: str = MINIO_BUCKET) -> None:
+    def __init__(self, bucket: str = GARAGE_BUCKET) -> None:
         log.info("Configuring Minio Storage...")
         # Get env vars like this so that we crash if they're missing
-        minio_url = MINIO_URL
-        minio_access_key = os.environ["MINIO_ACCESS_KEY"]
-        minio_secret_key = os.environ["MINIO_SECRET_KEY"]
+        garage_url = GARAGE_URL
+        garage_api_key = os.environ["GARAGE_API_KEY"]
+        garage_secret = os.environ["GARAGE_SECRET"]
+        log.info("Loaded credentials.")
+
         self.bucket = bucket
-        minio_secure = MINIO_SECURE
+        minio_secure = GARAGE_SECURE
+        log.info(f"URL: {garage_url}, bucket: {bucket}, secure: {minio_secure}")
 
-        log.info(f"URL: {minio_url}, bucket: {bucket}, secure: {minio_secure}")
-
-        # Create a client with the MinIO server playground, its access key
-        # and secret key.
         self.client = Minio(
-            minio_url,
-            access_key=minio_access_key,
-            secret_key=minio_secret_key,
+            garage_url,
+            access_key=garage_api_key,
+            secret_key=garage_secret,
             secure=minio_secure,
+            region="garage",
         )
+
+        # Sanity check
+        log.info(f"I see these buckets: {self.client.list_buckets()}")
 
         # Make the bucket if it doesn't exist.
         if not self.client.bucket_exists(self.bucket):
@@ -40,6 +46,8 @@ class StorageMinio(Storage):
             log.info(f"Created bucket {self.bucket}")
         else:
             log.info(f"Bucket {self.bucket} already exists")
+
+        log.info("Ready.")
 
     def upload_objects(self, objects: dict[str, str]) -> None:
         for path, file in objects.items():
