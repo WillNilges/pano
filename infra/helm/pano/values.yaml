@@ -43,7 +43,7 @@ pano:
   pvc:
     - pvc_name: "node-db"
       pvc_size: "30Gi"
-      mount_path: /var/lib/pano/node-db
+      mount_path: /var/lib/pano/node-db # Set NODE_DB_PATH to this
 
 podSecurityContext: {}
   # fsGroup: 2000

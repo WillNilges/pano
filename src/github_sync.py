@@ -59,9 +59,9 @@ def github_sync():
 
     args = parser.parse_args()
 
-    repo_path = os.environ.get("NODE_DB_REPO_PATH")
+    repo_path = os.environ.get("NODE_DB_PATH")
     if not repo_path:
-        log.error("Please specify NODE_DB_REPO_PATH in the environment.")
+        log.error("Please specify NODE_DB_PATH in the environment.")
         return
 
     repository_url = "https://github.com/nycmeshnet/node-db.git"  # Change this to your repository URL
