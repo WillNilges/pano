@@ -18,6 +18,7 @@ class MeshdbClient:
     def __init__(self):
         self.host = os.environ["MESHDB_ENDPOINT"]
         self.token = os.environ["MESHDB_TOKEN"]
+        print(f"THIS IS DANGEROUS {self.token}")
         self.config = Configuration(
             host=self.host,
             access_token=self.token,

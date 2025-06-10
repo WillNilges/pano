@@ -81,6 +81,9 @@ def allowed_file(filename):
 class IdResolutionError(Exception):
     pass
 
+class IdNotFoundError(IdResolutionError):
+    pass
+
 
 @app.route("/api/v1/image/<image_id>")
 def get_image_by_image_id(image_id: uuid.UUID):
@@ -177,6 +180,9 @@ def upload():
     # We can be passed install number or network number, but not both.
     try:
         install_id, node_id = resolve_install_id_or_node_id(request)
+    except IdNotFoundError as e:
+        logging.exception(e)
+        return {"detail": str(e)}, 404
     except IdResolutionError as e:
         logging.exception(e)
         return {"detail": str(e)}, 400
