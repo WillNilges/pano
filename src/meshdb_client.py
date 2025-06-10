@@ -11,6 +11,9 @@ from pymeshdb.models.building import Building
 from pymeshdb.models.install import Install
 from pymeshdb.models.node import Node
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 log = logging.getLogger("pano.meshdb_client")
 
 
@@ -18,7 +21,7 @@ class MeshdbClient:
     def __init__(self):
         self.host = os.environ["MESHDB_ENDPOINT"]
         self.token = os.environ["MESHDB_TOKEN"]
-        print(f"THIS IS DANGEROUS {self.token}")
+        log.error(f"THIS IS DANGEROUS {self.token}")
         self.config = Configuration(
             host=self.host,
             access_token=self.token,
