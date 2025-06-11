@@ -5,6 +5,8 @@ import shutil
 import uuid
 from datetime import timedelta
 
+import argparse
+
 import pymeshdb
 from pymeshdb.exceptions import NotFoundException
 from authlib.integrations.flask_client import OAuth
@@ -43,6 +45,7 @@ allowed_origins = {
         "http://127.0.0.1:3000",
         "https://pano.nycmesh.net",
         "https://devpano.nycmesh.net",
+        "https://api.devpano.nycmesh.net",
     ]
 }
 
@@ -76,6 +79,9 @@ def allowed_file(filename):
 
 
 class IdResolutionError(Exception):
+    pass
+
+class IdNotFoundError(IdResolutionError):
     pass
 
 
@@ -174,6 +180,9 @@ def upload():
     # We can be passed install number or network number, but not both.
     try:
         install_id, node_id = resolve_install_id_or_node_id(request)
+    except IdNotFoundError as e:
+        logging.exception(e)
+        return {"detail": str(e)}, 404
     except IdResolutionError as e:
         logging.exception(e)
         return {"detail": str(e)}, 400
@@ -202,11 +211,15 @@ def upload():
         if file and allowed_file(file.filename):
             # Sanitize input
             filename = secure_filename(file.filename)
+
             # Ensure that the upload directory exists
-            try:
-                os.makedirs(UPLOAD_DIRECTORY)
-            except:
-                pass
+            if not os.path.exists(UPLOAD_DIRECTORY):
+                try:
+                    os.makedirs(UPLOAD_DIRECTORY)
+                except:
+                    log.error(f"Could not create {UPLOAD_DIRECTORY}")
+                    return {"detail": "There was a problem processing your upload."}, 500
+
             # Save the file to local storage
             file_path = os.path.join(UPLOAD_DIRECTORY, filename)
             file.save(file_path)
@@ -224,7 +237,7 @@ def upload():
                     continue
             except ValueError as e:
                 logging.exception(
-                    "Something went wrong processing this panorama upload"
+                    "Error processing this panorama upload"
                 )
                 return {
                     "detail": "Something went wrong processing this panorama upload"
