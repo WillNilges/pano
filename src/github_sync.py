@@ -68,13 +68,20 @@ def github_sync():
 
     manage_repo(repo_path, repository_url)
 
-    for file_name in os.listdir(f"{repo_path}/data/panoramas"):
-        logging.info(f"Processing {file_name}")
-        existing_image = pano.db.get_image(original_filename=file_name)
-        if existing_image:
-            continue
+    # Find files that already exist
+    node_db_panoramas = set(os.listdir(f"{repo_path}/data/panoramas"))
+    pano_panoramas = set(pano.db.get_images())
+    
+    new_panoramas = node_db_panoramas.difference(pano_panoramas)
 
-        logging.info("Will upload.")
+    log.info(f"node-db has {len(new_panoramas)} images we don't have.")
+
+    for file_name in new_panoramas:
+        log.info(f"Processing {file_name}")
+        #existing_image = pano.db.get_image(original_filename=file_name)
+        #if existing_image:
+        #    continue
+
         install_id = None
         node_id = None
 
@@ -86,7 +93,7 @@ def github_sync():
 
         # Check if a match was found and print it
         if not match:
-            logging.warning(f"Could not parse number from {file_name}. Filename might be invalid.")
+            log.warning(f"Could not parse number from {file_name}. Filename might be invalid.")
             continue
 
         first_match = match.group()
@@ -94,32 +101,32 @@ def github_sync():
         # FIXME (wdn): Code duplication :(
         if "nn" in file_name:
             network_number = int(first_match) 
-            logging.info(f"Network Number = {network_number}")
+            log.info(f"Network Number = {network_number}")
             node = pano.meshdb.get_node(network_number)
             if not node:
-                logging.warning(f"Failed to resolve NN {network_number} to node_id.")
+                log.warning(f"Failed to resolve NN {network_number} to node_id.")
                 continue
             node_id = uuid.UUID(node.id)
-            logging.info(f"Successfully resolved NN {network_number} to node_id {node_id}")
+            log.info(f"Successfully resolved NN {network_number} to node_id {node_id}")
         else:
             install_number = int(first_match)
-            logging.info(f"Install Number = {install_number}")
+            log.info(f"Install Number = {install_number}")
             install = pano.meshdb.get_install(install_number)
             if not install:
-                logging.warning(f"Failed to resolve install# {install_number} to install_id.")
+                log.warning(f"Failed to resolve install# {install_number} to install_id.")
                 continue
             install_id = uuid.UUID(install.id)
-            logging.info(f"Successfully resolved install# {install_number} to install_id {install_id}")
+            log.info(f"Successfully resolved install# {install_number} to install_id {install_id}")
 
         if args.write:
             try:
                 pano.handle_upload(
                     f"{repo_path}/data/panoramas/{file_name}", install_id, node_id, False 
                 )
-                logging.info("Write successful.")
+                log.info("Write successful.")
             except Exception:
-                logging.exception("Could not save panorama.")
+                log.exception("Could not save panorama.")
 
 if __name__ == "__main__":
     github_sync()
-    logging.info("Complete. Goodbye!")
+    log.info("Complete. Goodbye!")
