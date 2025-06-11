@@ -70,8 +70,8 @@ def github_sync():
 
     # Find files that already exist
     node_db_panoramas = set(os.listdir(f"{repo_path}/data/panoramas"))
-    pano_panoramas = set(pano.db.get_images())
-    
+    pano_panoramas = {item.original_filename for item in pano.db.get_images()}
+
     new_panoramas = node_db_panoramas.difference(pano_panoramas)
 
     log.info(f"node-db has {len(new_panoramas)} images we don't have.")
