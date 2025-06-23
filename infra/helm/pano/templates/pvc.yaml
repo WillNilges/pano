@@ -1,0 +1,15 @@
+{{- range .Values.pano.pvc}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .pvc_name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: {{ .pvc_size }}
+---
+{{- end }}

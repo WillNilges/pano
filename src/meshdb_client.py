@@ -11,6 +11,9 @@ from pymeshdb.models.building import Building
 from pymeshdb.models.install import Install
 from pymeshdb.models.node import Node
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 log = logging.getLogger("pano.meshdb_client")
 
 
@@ -28,6 +31,7 @@ class MeshdbClient:
         self.b = BuildingsApi(self.c)
         self.i = InstallsApi(self.c)
         self.n = NodesApi(self.c)
+        log.info("Initialized ")
 
     def get_install(self, install_number: int) -> Install | None:
         try:

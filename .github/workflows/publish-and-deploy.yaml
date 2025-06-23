@@ -3,11 +3,11 @@ name: Publish and Deploy
 
 on:
   push:
-    branches: [ main, wdn/garage ]
+    branches: [ main, wdn/sync-node-db ]
   workflow_dispatch:
     branches:
       - main
-      - wdn/garage
+      - wdn/sync-node-db
 
 permissions: read-all
 
