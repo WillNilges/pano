@@ -99,24 +99,42 @@ def get_image_by_image_id(image_id: uuid.UUID):
 
 
 @app.route("/api/v1/install/<install_number>")
-@app.route("/api/v1/nn/<network_number>")
-def get_images_by_meshdb_object(install_number: int | None = None, network_number: int | None = None):
+def get_images_by_install_number(install_number: int):
     try:
         j = jsonify(
-            pano.get_images(
-                install_number=int(install_number) if install_number else None,
-                network_number=int(network_number) if network_number else None,
+            pano.get_images_by_install_number(
+                install_number=int(install_number),
             )
         )
         return j, 200
     except ValueError:
         error = (
-            f"{install_number if install_number else network_number} is not an integer."
+            f"{install_number} is not an integer."
         )
         logging.exception(error)
         return {"detail": error}, 400
     except NotFoundException:
-        error = f"Could not find {install_number if install_number else network_number}. Consult MeshDB to make sure the object exists."
+        error = f"Could not find {install_number}. Consult MeshDB to make sure the object exists."
+        logging.exception(error)
+        return {"detail": error}, 404
+
+@app.route("/api/v1/nn/<network_number>")
+def get_images_by_network_number(network_number: int):
+    try:
+        j = jsonify(
+            pano.get_images_by_network_number(
+                network_number=int(network_number),
+            )
+        )
+        return j, 200
+    except ValueError:
+        error = (
+            f"{network_number} is not an integer."
+        )
+        logging.exception(error)
+        return {"detail": error}, 400
+    except NotFoundException:
+        error = f"Could not find {network_number}. Consult MeshDB to make sure the object exists."
         logging.exception(error)
         return {"detail": error}, 404
 

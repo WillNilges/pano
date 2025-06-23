@@ -31,26 +31,42 @@ class PanoDB:
             #logging.warning(f"Could not find image. id={id}, original_filename={original_filename}")
             return None
 
-    def get_images(
+    def get_images_by_install_id(
         self,
-        install_id: uuid.UUID | None = None,
-        node_id: uuid.UUID | None = None,
-        signature: str | None = None,
+        install_id: uuid.UUID,
     ) -> list[Image]:
         images = []
         with Session(self.engine, expire_on_commit=False) as session:
-            statement = select(Image)
-            if install_id:
-                statement = statement.filter_by(install_id=install_id)
-            if node_id:
-                statement = statement.filter_by(node_id=node_id)
-            if signature:
-                statement = statement.filter_by(signature=signature)
+            statement = select(Image).filter_by(install_id=install_id)
             rows = session.execute(statement).fetchall()
-            if rows:
-                # FIXME: This is probably the wrong way to get this data
-                for r in rows:
-                    images.append(r[0])
+            for r in rows:
+                images.append(r[0])
+        return images
+
+    def get_images_by_node_id(
+        self,
+        node_id: uuid.UUID,
+    ) -> list[Image]:
+        images = []
+        with Session(self.engine, expire_on_commit=False) as session:
+            statement = select(Image).filter_by(node_id=node_id)
+            rows = session.execute(statement).fetchall()
+            for r in rows:
+                images.append(r[0])
+        return images
+
+    def get_image_by_signature(
+        self,
+        signature: str,
+    ) -> list[Image]:
+        images = []
+        with Session(self.engine, expire_on_commit=False) as session:
+            statement = select(Image).filter_by(signature=signature)
+            rows = session.execute(statement).fetchall()
+            if len(rows) > 1:
+                logging.warning("get_image_by_signature returned more than 1 image. There are probably duplicate images.")
+            for r in rows:
+                images.append(r[0])
         return images
 
     def save_image(self, image: Image):

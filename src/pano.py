@@ -2,7 +2,7 @@ import dataclasses
 from datetime import datetime
 import logging
 import uuid
-from typing import Optional
+from typing import Any, Optional
 
 from db import PanoDB
 from meshdb_client import MeshdbClient
@@ -34,31 +34,20 @@ class Pano:
             serialized_images[image.install_id].append(i)
         return serialized_images
 
-    def get_images(
-        self, install_number: int | None = None, network_number: int | None = None
+    def get_images_by_install_number(
+        self, install_number: int
     ) -> list[dict]:
         install_id = None
-        node_id = None
 
-        if install_number:
-            install = self.meshdb.get_install(install_number)
-            if not install:
-                raise NotFound(
-                    "Could not resolve new install number. Is this a valid install?"
-                )
+        install = self.meshdb.get_install(install_number)
+        if not install:
+            raise NotFound(
+                "Could not resolve new install number. Is this a valid install?"
+            )
 
-            install_id = uuid.UUID(install.id)
+        install_id = uuid.UUID(install.id)
 
-        if network_number:
-            node = self.meshdb.get_node(network_number)
-            if not node:
-                raise NotFound(
-                    "Could not resolve network number. Is this a valid network number?"
-                )
-
-            node_id = uuid.UUID(node.id)
-
-        images = self.db.get_images(install_id=install_id, node_id=node_id)
+        images = self.db.get_images_by_install_id(install_id)
         serialized_images = []
         for image in images:
             i = dataclasses.asdict(image)
@@ -66,6 +55,35 @@ class Pano:
             serialized_images.append(i)
 
         return serialized_images
+
+    def get_images_by_network_number(
+        self, network_number: int
+    ) -> list[dict]:
+        node_id = None
+
+        node = self.meshdb.get_node(network_number)
+        if not node:
+            raise NotFound(
+                "Could not resolve network number. Is this a valid network number?"
+            )
+
+        node_id = uuid.UUID(node.id)
+
+        images = self.db.get_images_by_node_id(node_id)
+        serialized_images = []
+        for image in images:
+            serialized_images.append(self.serialize_image(image))
+
+        # Get images from related installs
+        for image in node.installs:
+            pass
+
+        return serialized_images
+
+    def serialize_image(self, image: Image) -> dict[str, Any]:
+        i = dataclasses.asdict(image)
+        i["url"] = self.storage.get_presigned_url(image)
+        return i
 
     # TODO: How to update order?
     def update_image(
