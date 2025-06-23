@@ -101,11 +101,13 @@ def get_image_by_image_id(image_id: uuid.UUID):
 @app.route("/api/v1/install/<install_number>")
 def get_images_by_install_number(install_number: int):
     try:
-        j = jsonify(
-            pano.get_images_by_install_number(
-                install_number=int(install_number),
-            )
+        images, additional_images = pano.get_images_by_install_number(
+            install_number=int(install_number),
         )
+        j = {
+            "images": images,
+            "additional_images": additional_images
+        }
         return j, 200
     except ValueError:
         error = (
@@ -121,11 +123,13 @@ def get_images_by_install_number(install_number: int):
 @app.route("/api/v1/nn/<network_number>")
 def get_images_by_network_number(network_number: int):
     try:
-        j = jsonify(
-            pano.get_images_by_network_number(
-                network_number=int(network_number),
-            )
+        images, additional_images = pano.get_images_by_network_number(
+            network_number=int(network_number),
         )
+        j = {
+            "images": images,
+            "additional_images": additional_images
+        }
         return j, 200
     except ValueError:
         error = (

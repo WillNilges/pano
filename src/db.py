@@ -31,6 +31,17 @@ class PanoDB:
             #logging.warning(f"Could not find image. id={id}, original_filename={original_filename}")
             return None
 
+    def get_all_images(
+        self,
+    ) -> list[Image]:
+        images = []
+        with Session(self.engine, expire_on_commit=False) as session:
+            statement = select(Image)
+            rows = session.execute(statement).fetchall()
+            for r in rows:
+                images.append(r[0])
+        return images
+
     def get_images_by_install_id(
         self,
         install_id: uuid.UUID,

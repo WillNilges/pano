@@ -25,7 +25,7 @@ class Pano:
 
     def get_all_images(self) -> dict[int, list[dict]]:
         serialized_images = {}
-        for image in self.db.get_images():
+        for image in self.db.get_all_images():
             if not serialized_images.get(image.install_id):
                 serialized_images[image.install_id] = []
 
@@ -36,7 +36,7 @@ class Pano:
 
     def get_images_by_install_number(
         self, install_number: int
-    ) -> list[dict]:
+    ) -> tuple[list[dict], dict[str, list[dict]]]:
         install_id = None
 
         install = self.meshdb.get_install(install_number)
@@ -54,11 +54,20 @@ class Pano:
             i["url"] = self.storage.get_presigned_url(image)
             serialized_images.append(i)
 
-        return serialized_images
+        # Get images from node if it exists
+        additional_images_by_network_number = {}
+        if install.node:
+            node_images = self.db.get_images_by_node_id(uuid.UUID(install.node.id))
+            additional_images = []
+            for image in node_images:
+                additional_images.append(self.serialize_image(image))
+            additional_images_by_network_number[install.node.network_number] = additional_images
+
+        return serialized_images, additional_images_by_network_number
 
     def get_images_by_network_number(
         self, network_number: int
-    ) -> list[dict]:
+    ) -> tuple[list[dict], dict[str, list[dict]]]:
         node_id = None
 
         node = self.meshdb.get_node(network_number)
@@ -75,10 +84,16 @@ class Pano:
             serialized_images.append(self.serialize_image(image))
 
         # Get images from related installs
-        for image in node.installs:
-            pass
+        additional_images_by_install_number = {}
+        for install in node.installs:
+            if install.id:
+                install_images = self.db.get_images_by_install_id(uuid.UUID(install.id))
+                additional_images = []
+                for image in install_images:
+                    additional_images.append(self.serialize_image(image))
+                additional_images_by_install_number[install.install_number] = additional_images
 
-        return serialized_images
+        return serialized_images, additional_images_by_install_number
 
     def serialize_image(self, image: Image) -> dict[str, Any]:
         i = dataclasses.asdict(image)
@@ -176,7 +191,7 @@ class Pano:
         possible_duplicates = {}
 
         # Get any images we already uploaded for this install
-        images = self.db.get_images(signature=uploaded_image.signature)
+        images = self.db.get_image_by_signature(uploaded_image.signature)
         for i in images:
             if uploaded_image.signature in i.signature:
                 possible_duplicates[
