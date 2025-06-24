@@ -161,8 +161,9 @@ def get_images_by_network_number(network_number: str):
 
 @app.route("/api/v1/image/<image_id>", methods=["DELETE"])
 @login_required
-def delete_image():
+def delete_image(image_id: str):
     pass
+    raise NotImplemented
 
 # Upadte a particular image
 @app.route("/api/v1/image/<image_id>", methods=["PUT"])
