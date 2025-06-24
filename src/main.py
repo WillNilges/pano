@@ -28,6 +28,8 @@ from models.user import User
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
+NETWORK_NUMBER_MAX = 8000
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -87,20 +89,31 @@ class IdNotFoundError(IdResolutionError):
 
 
 @app.route("/api/v1/image/<image_id>")
-def get_image_by_image_id(image_id: uuid.UUID):
-    image = pano.db.get_image(image_id)
+def get_image_by_image_id(image_id: str):
+    image_uuid = None
+    try:
+        image_uuid = uuid.UUID(image_id)
+    except ValueError:
+        error = f"get_image_by_image_id failed: {html.escape(image_id)} is not a valid UUID."
+        log.exception(error)
+        return {"detail": error}, 403
+
+    if not image_uuid:
+        log.error("Could not GET image. image_id not provided")
+        return {"detail": "image_id not provided."}, 403
+
+    image = pano.db.get_image(image_uuid)
     if not image:
         error = f"Image {image_id} not found."
         log.error(error)
         return {"detail": error}, 404
     i = dataclasses.asdict(image)
     i["url"] = pano.storage.get_presigned_url(image)
-
     return i, 200
 
 
 @app.route("/api/v1/install/<install_number>")
-def get_images_by_install_number(install_number: int):
+def get_images_by_install_number(install_number: str):
     try:
         images, additional_images = pano.get_images_by_install_number(
             install_number=int(install_number),
@@ -112,7 +125,7 @@ def get_images_by_install_number(install_number: int):
         return j, 200
     except ValueError:
         error = (
-            f"{install_number} is not an integer."
+            f"{html.escape(str(install_number))} is not an integer."
         )
         logging.exception(error)
         return {"detail": error}, 400
@@ -122,10 +135,13 @@ def get_images_by_install_number(install_number: int):
         return {"detail": error}, 404
 
 @app.route("/api/v1/nn/<network_number>")
-def get_images_by_network_number(network_number: int):
+def get_images_by_network_number(network_number: str):
     try:
+        nn = int(network_number)
+        if nn > NETWORK_NUMBER_MAX:
+            return {"detail": "Please enter a NN <= 8000"}, 403
         images, additional_images = pano.get_images_by_network_number(
-            network_number=int(network_number),
+            network_number=nn,
         )
         j = {
             "images": images,
@@ -134,7 +150,7 @@ def get_images_by_network_number(network_number: int):
         return j, 200
     except ValueError:
         error = (
-            f"{network_number} is not an integer."
+            f"{html.escape(str(network_number))} is not an integer."
         )
         logging.exception(error)
         return {"detail": error}, 400
@@ -143,11 +159,28 @@ def get_images_by_network_number(network_number: int):
         logging.exception(error)
         return {"detail": error}, 404
 
-
-@app.route("/api/v1/update", methods=["POST"])
+@app.route("/api/v1/image/<image_id>", methods=["DELETE"])
 @login_required
-def update():
-    id = request.values.get("id")
+def delete_image():
+    pass
+
+# Upadte a particular image
+@app.route("/api/v1/image/<image_id>", methods=["PUT"])
+@login_required
+def update_image(image_id: str):
+    image_uuid = None
+    try:
+        image_uuid = uuid.UUID(image_id)
+    except ValueError:
+        error = f"get_image_by_image_id failed: {html.escape(image_id)} is not a valid UUID."
+        log.exception(error)
+        return {"detail": error}, 403
+
+    if not image_uuid:
+        log.error("Could not PUT image. image_id not provided")
+        return {"detail": "image_id not provided."}, 403
+
+    # TODO: (wdn) Use NN or Install #
     new_install_number = request.values.get("new_install_number")
 
     # check if the post request has the file part
@@ -188,13 +221,13 @@ def update():
     file.save(file_path)
 
     image = pano.update_image(
-        uuid.UUID(id),
+        image_uuid,
         int(new_install_number) if new_install_number else None,
         file_path,
     )
     return jsonify(image), 200
 
-
+# Process image upload request.
 @app.route("/api/v1/upload", methods=["POST"])
 @login_required
 def upload():
