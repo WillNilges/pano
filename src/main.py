@@ -4,6 +4,7 @@ import os
 import shutil
 import uuid
 from datetime import timedelta
+import html
 
 import argparse
 
@@ -116,7 +117,7 @@ def get_images_by_install_number(install_number: int):
         logging.exception(error)
         return {"detail": error}, 400
     except NotFoundException:
-        error = f"Could not find {install_number}. Consult MeshDB to make sure the object exists."
+        error = f"Could not find {html.escape(str(install_number))}. Consult MeshDB to make sure the object exists."
         logging.exception(error)
         return {"detail": error}, 404
 
