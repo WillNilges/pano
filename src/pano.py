@@ -57,6 +57,7 @@ class Pano:
         # Get images from node if it exists
         additional_images_by_network_number = {}
         if install.node:
+            import pdb; pdb.set_trace()
             node_images = self.db.get_images_by_node_id(uuid.UUID(install.node.id))
             additional_images = []
             for image in node_images:

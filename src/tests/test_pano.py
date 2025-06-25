@@ -42,6 +42,7 @@ class TestPano(unittest.TestCase):
 
         mock_install = MagicMock()
         mock_install.id = str(UUID_1)
+        mock_install.node = None
         self.meshdb.get_install.return_value = mock_install
 
         self.session = Session(self.db.engine)
@@ -56,7 +57,7 @@ class TestPano(unittest.TestCase):
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
         self.assertEqual({}, r)
 
-        self.assertEqual(1, len(self.pano.get_images(1)))
+        self.assertEqual(1, len(self.pano.get_images_by_install_number(1)))
 
     @patch("models.image.uuid")
     def test_handle_duplicate_upload(self, mock_uuid):
@@ -77,7 +78,7 @@ class TestPano(unittest.TestCase):
 
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
 
-        all_images = self.pano.get_images(1)
+        all_images = self.pano.get_images_by_install_number(1)
 
         self.assertEqual(
             {
@@ -105,7 +106,7 @@ class TestPano(unittest.TestCase):
         self.assertEqual({}, r)
 
         # Make sure there are two records in the DB
-        self.assertEqual(2, len(self.pano.get_images(1)))
+        self.assertEqual(2, len(self.pano.get_images_by_install_number(1)))
 
     def test_failed_to_upload_to_s3(self):
         self.minio.upload_objects.side_effect = Exception()
@@ -116,7 +117,7 @@ class TestPano(unittest.TestCase):
             r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
 
         # Make sure there are no images in the DB
-        self.assertEqual(0, len(self.pano.get_images(1)))
+        self.assertEqual(0, len(self.pano.get_images_by_install_number(1)))
 
     def test_get_images(self):
         self.meshdb.get_primary_building_for_install.side_effect = [
@@ -130,7 +131,7 @@ class TestPano(unittest.TestCase):
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH_2, UUID_1)
         self.assertEqual({}, r)
 
-        all_images = self.pano.get_images(1)
+        all_images = self.pano.get_images_by_install_number(1)
 
         self.assertEqual(2, len(all_images))
 
