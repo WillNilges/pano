@@ -69,6 +69,7 @@ class TestAPI(unittest.TestCase):
         assert response.status_code == 404
         assert not response.json
 
+
 #    def get_install(self):
 #        pass
 
