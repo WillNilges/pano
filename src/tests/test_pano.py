@@ -57,7 +57,9 @@ class TestPano(unittest.TestCase):
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
         self.assertEqual({}, r)
 
-        self.assertEqual(1, len(self.pano.get_images_by_install_number(1)))
+        images, _ = self.pano.get_images_by_install_number(1)
+
+        self.assertEqual(1, len(images))
 
     @patch("models.image.uuid")
     def test_handle_duplicate_upload(self, mock_uuid):
@@ -78,13 +80,13 @@ class TestPano(unittest.TestCase):
 
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
 
-        all_images = self.pano.get_images_by_install_number(1)
+        all_images, _ = self.pano.get_images_by_install_number(1)
 
         self.assertEqual(
             {
                 PurePosixPath(
                     SAMPLE_IMAGE_PATH
-                ).name: f"http://{GARAGE_URL}/panoramas/1/{all_images[0]['id']}"
+                ).name: f"http://{GARAGE_URL}/panoramas/{all_images[0]['id']}"
             },
             r,
         )
@@ -116,8 +118,10 @@ class TestPano(unittest.TestCase):
         with self.assertRaises(Exception):
             r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
 
+        images, _ = self.pano.get_images_by_install_number(1)
+
         # Make sure there are no images in the DB
-        self.assertEqual(0, len(self.pano.get_images_by_install_number(1)))
+        self.assertEqual(0, len(images))
 
     def test_get_images(self):
         self.meshdb.get_primary_building_for_install.side_effect = [
@@ -131,7 +135,7 @@ class TestPano(unittest.TestCase):
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH_2, UUID_1)
         self.assertEqual({}, r)
 
-        all_images = self.pano.get_images_by_install_number(1)
+        all_images, _ = self.pano.get_images_by_install_number(1)
 
         self.assertEqual(2, len(all_images))
 

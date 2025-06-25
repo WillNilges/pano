@@ -8,6 +8,8 @@ from db import PanoDB
 from meshdb_client import MeshdbClient
 from models.image import Image
 from models.panorama import Panorama
+from pymeshdb.models.install import Install
+from pymeshdb.models.node import Node
 from storage_minio import StorageMinio
 from werkzeug.exceptions import NotFound
 
@@ -35,7 +37,9 @@ class Pano:
         return serialized_images
 
     def get_images_by_install_number(
-        self, install_number: int
+        self,
+        install_number: int,
+        get_related: bool = False,
     ) -> tuple[list[dict], dict[str, list[dict]]]:
         install_id = None
 
@@ -50,14 +54,23 @@ class Pano:
         images = self.db.get_images_by_install_id(install_id)
         serialized_images = []
         for image in images:
-            i = dataclasses.asdict(image)
-            i["url"] = self.storage.get_presigned_url(image)
-            serialized_images.append(i)
+            serialized_images.append(self.serialize_image(image))
 
+        related_images = {}
+        if get_related:
+            related_images = self.get_related_images_from_install(install)
+
+        return serialized_images, related_images
+
+    def get_related_images_from_install(
+        self, install: Install
+    ) -> dict[str, list[dict]]:
         # Get images from node if it exists
         additional_images_by_network_number = {}
         if install.node:
-            import pdb; pdb.set_trace()
+            import pdb
+
+            pdb.set_trace()
             node_images = self.db.get_images_by_node_id(uuid.UUID(install.node.id))
             additional_images = []
             for image in node_images:
@@ -65,11 +78,12 @@ class Pano:
             additional_images_by_network_number[
                 install.node.network_number
             ] = additional_images
-
-        return serialized_images, additional_images_by_network_number
+        return additional_images_by_network_number
 
     def get_images_by_network_number(
-        self, network_number: int
+        self,
+        network_number: int,
+        get_related: bool = False,
     ) -> tuple[list[dict], dict[str, list[dict]]]:
         node_id = None
 
@@ -86,6 +100,13 @@ class Pano:
         for image in images:
             serialized_images.append(self.serialize_image(image))
 
+        related_images = {}
+        if get_related:
+            related_images = self.get_related_images_from_node(node)
+
+        return serialized_images, related_images
+
+    def get_related_images_from_node(self, node: Node) -> dict[str, list[dict]]:
         # Get images from related installs
         additional_images_by_install_number = {}
         for install in node.installs:
@@ -97,8 +118,7 @@ class Pano:
                 additional_images_by_install_number[
                     install.install_number
                 ] = additional_images
-
-        return serialized_images, additional_images_by_install_number
+        return additional_images_by_install_number
 
     def serialize_image(self, image: Image) -> dict[str, Any]:
         i = dataclasses.asdict(image)

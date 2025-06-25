@@ -115,41 +115,59 @@ def get_image_by_image_id(image_id: str):
 
 @app.route("/api/v1/install/<install_number>")
 def get_images_by_install_number(install_number: str):
+    install_number_int = None
+    get_related = False
     try:
-        images, additional_images = pano.get_images_by_install_number(
-            install_number=int(install_number),
-        )
-        j = {"images": images, "additional_images": additional_images}
-        return j, 200
+        install_number_int = int(install_number)
+        get_related = bool(request.values.get("get_related"))
     except ValueError:
         error = f"{html.escape(str(install_number))} is not an integer."
         logging.exception(error)
         return {"detail": error}, 400
+
+    if not install_number_int:
+        return {"detail": "install_number not provided."}, 400
+
+    try:
+        images, additional_images = pano.get_images_by_install_number(
+            install_number_int, get_related
+        )
     except NotFoundException:
         error = f"Could not find {html.escape(str(install_number))}. Consult MeshDB to make sure the object exists."
         logging.exception(error)
         return {"detail": error}, 404
 
+    j = {"images": images, "additional_images": additional_images}
+    return j, 200
+
 
 @app.route("/api/v1/nn/<network_number>")
 def get_images_by_network_number(network_number: str):
+    nn = None
+    get_related = False
     try:
         nn = int(network_number)
-        if nn > NETWORK_NUMBER_MAX:
-            return {"detail": "Please enter a NN <= 8000"}, 403
-        images, additional_images = pano.get_images_by_network_number(
-            network_number=nn,
-        )
-        j = {"images": images, "additional_images": additional_images}
-        return j, 200
+        get_related = bool(request.values.get("get_related"))
     except ValueError:
         error = f"{html.escape(str(network_number))} is not an integer."
         logging.exception(error)
         return {"detail": error}, 400
+
+    if not nn:
+        return {"detail": "network_number not provided."}, 400
+
+    if nn > NETWORK_NUMBER_MAX:
+        return {"detail": "Please enter a NN <= 8000"}, 403
+
+    try:
+        images, additional_images = pano.get_images_by_network_number(nn, get_related)
     except NotFoundException:
         error = f"Could not find {network_number}. Consult MeshDB to make sure the object exists."
         logging.exception(error)
         return {"detail": error}, 404
+
+    j = {"images": images, "additional_images": additional_images}
+    return j, 200
 
 
 @app.route("/api/v1/image/<image_id>", methods=["DELETE"])
