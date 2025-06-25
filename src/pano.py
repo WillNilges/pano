@@ -61,7 +61,9 @@ class Pano:
             additional_images = []
             for image in node_images:
                 additional_images.append(self.serialize_image(image))
-            additional_images_by_network_number[install.node.network_number] = additional_images
+            additional_images_by_network_number[
+                install.node.network_number
+            ] = additional_images
 
         return serialized_images, additional_images_by_network_number
 
@@ -91,7 +93,9 @@ class Pano:
                 additional_images = []
                 for image in install_images:
                     additional_images.append(self.serialize_image(image))
-                additional_images_by_install_number[install.install_number] = additional_images
+                additional_images_by_install_number[
+                    install.install_number
+                ] = additional_images
 
         return serialized_images, additional_images_by_install_number
 

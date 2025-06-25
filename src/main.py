@@ -84,6 +84,7 @@ def allowed_file(filename):
 class IdResolutionError(Exception):
     pass
 
+
 class IdNotFoundError(IdResolutionError):
     pass
 
@@ -96,11 +97,11 @@ def get_image_by_image_id(image_id: str):
     except ValueError:
         error = f"get_image_by_image_id failed: {html.escape(image_id)} is not a valid UUID."
         log.exception(error)
-        return {"detail": error}, 403
+        return {"detail": error}, 400
 
     if not image_uuid:
         log.error("Could not GET image. image_id not provided")
-        return {"detail": "image_id not provided."}, 403
+        return {"detail": "image_id not provided."}, 400
 
     image = pano.db.get_image(image_uuid)
     if not image:
@@ -118,21 +119,17 @@ def get_images_by_install_number(install_number: str):
         images, additional_images = pano.get_images_by_install_number(
             install_number=int(install_number),
         )
-        j = {
-            "images": images,
-            "additional_images": additional_images
-        }
+        j = {"images": images, "additional_images": additional_images}
         return j, 200
     except ValueError:
-        error = (
-            f"{html.escape(str(install_number))} is not an integer."
-        )
+        error = f"{html.escape(str(install_number))} is not an integer."
         logging.exception(error)
         return {"detail": error}, 400
     except NotFoundException:
         error = f"Could not find {html.escape(str(install_number))}. Consult MeshDB to make sure the object exists."
         logging.exception(error)
         return {"detail": error}, 404
+
 
 @app.route("/api/v1/nn/<network_number>")
 def get_images_by_network_number(network_number: str):
@@ -143,15 +140,10 @@ def get_images_by_network_number(network_number: str):
         images, additional_images = pano.get_images_by_network_number(
             network_number=nn,
         )
-        j = {
-            "images": images,
-            "additional_images": additional_images
-        }
+        j = {"images": images, "additional_images": additional_images}
         return j, 200
     except ValueError:
-        error = (
-            f"{html.escape(str(network_number))} is not an integer."
-        )
+        error = f"{html.escape(str(network_number))} is not an integer."
         logging.exception(error)
         return {"detail": error}, 400
     except NotFoundException:
@@ -159,11 +151,12 @@ def get_images_by_network_number(network_number: str):
         logging.exception(error)
         return {"detail": error}, 404
 
+
 @app.route("/api/v1/image/<image_id>", methods=["DELETE"])
 @login_required
 def delete_image(image_id: str):
-    pass
     raise NotImplemented
+
 
 # Upadte a particular image
 @app.route("/api/v1/image/<image_id>", methods=["PUT"])
@@ -228,6 +221,7 @@ def update_image(image_id: str):
     )
     return jsonify(image), 200
 
+
 # Process image upload request.
 @app.route("/api/v1/upload", methods=["POST"])
 @login_required
@@ -275,7 +269,9 @@ def upload():
                     os.makedirs(UPLOAD_DIRECTORY)
                 except:
                     log.error(f"Could not create {UPLOAD_DIRECTORY}")
-                    return {"detail": "There was a problem processing your upload."}, 500
+                    return {
+                        "detail": "There was a problem processing your upload."
+                    }, 500
 
             # Save the file to local storage
             file_path = os.path.join(UPLOAD_DIRECTORY, filename)
@@ -293,9 +289,7 @@ def upload():
                     possible_duplicates.update(d)
                     continue
             except ValueError as e:
-                logging.exception(
-                    "Error processing this panorama upload"
-                )
+                logging.exception("Error processing this panorama upload")
                 return {
                     "detail": "Something went wrong processing this panorama upload"
                 }, 400

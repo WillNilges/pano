@@ -1,15 +1,15 @@
-#import unittest
+# import unittest
 #
-#from pano import Pano
+# from pano import Pano
 #
 #
-#class TestAPI(unittest.TestCase):
+# class TestAPI(unittest.TestCase):
 #    def setUp(self):
 #        self.pano = Pano()
-#    
+#
 #    def test_upload_and_retrieve():
 #        pass
-        
+
 import unittest
 from unittest.mock import patch
 import uuid
@@ -20,6 +20,7 @@ import pytest
 from flask import Flask
 from . import SAMPLE_IMAGE_PATH, UUID_1
 from src.main import app
+
 
 class TestAPI(unittest.TestCase):
     @patch("meshdb_client.MeshdbClient")
@@ -32,19 +33,47 @@ class TestAPI(unittest.TestCase):
             self.client = client
         self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
 
-    def test_get_image_by_image_id_invalid_id(self):
+    def test_get_image_by_image_id_bad_requests(self):
         invalid_id = "chom"
         response = self.client.get(f"/api/v1/image/{invalid_id}")
-        assert response.status_code == 403
+        assert response.status_code == 400
         assert response.json
-        assert response.json["detail"] == f"get_image_by_image_id failed: {invalid_id} is not a valid UUID."
+        assert (
+            response.json["detail"]
+            == f"get_image_by_image_id failed: {invalid_id} is not a valid UUID."
+        )
 
+        response = self.client.get(f"/api/v1/image/")
+        assert response.status_code == 404
+        assert not response.json
+
+    def test_get_image_by_install_number_bad_requests(self):
+        invalid_id = "chom"
+        response = self.client.get(f"/api/v1/install/{invalid_id}")
+        assert response.status_code == 400
+        assert response.json
+        assert response.json["detail"] == f"{invalid_id} is not an integer."
+
+        response = self.client.get(f"/api/v1/install/")
+        assert response.status_code == 404
+        assert not response.json
+
+    def test_get_image_by_network_number_bad_requests(self):
+        invalid_id = "chom"
+        response = self.client.get(f"/api/v1/nn/{invalid_id}")
+        assert response.status_code == 400
+        assert response.json
+        assert response.json["detail"] == f"{invalid_id} is not an integer."
+
+        response = self.client.get(f"/api/v1/nn/")
+        assert response.status_code == 404
+        assert not response.json
 
 #    def get_install(self):
 #        pass
 
 #    def test_upload_and_retrieve(self):
-#        chom = uuid.uuid4() 
+#        chom = uuid.uuid4()
 #        self.meshdb.get_install.return_value = chom
 #        post_data = {
 #            "installNumber": 420
@@ -52,31 +81,36 @@ class TestAPI(unittest.TestCase):
 #        rv = self.client.post("/api/v1/upload", data=post_data)
 #        assert rv.status_code == 201
 
+
 @pytest.fixture
 def client():
     app.config["TESTING"] = True
     with app.test_client() as client:
         yield client
 
+
 def test_home_unauthenticated(client):
     rv = client.get("/")
     assert rv.status_code == 200
     assert b"click here to login" in rv.data
+
 
 def test_userinfo_unauthenticated(client):
     rv = client.get("/userinfo")
     assert rv.status_code == 401
     assert b"Please log in" in rv.data
 
+
 def test_get_image_by_image_id_not_found(client):
     test_id = uuid.uuid4()
     rv = client.get(f"/api/v1/image/{test_id}")
     assert rv.status_code == 404
 
-#def test_get_images_by_install_id_not_found(client):
+
+# def test_get_images_by_install_id_not_found(client):
 #    rv = client.get("/api/v1/install/404")
 #    assert rv.status_code == 404
 #
-#def test_get_images_by_node_id_not_found(client):
+# def test_get_images_by_node_id_not_found(client):
 #    rv = client.get("/api/v1/nn/404")
 #    assert rv.status_code == 404

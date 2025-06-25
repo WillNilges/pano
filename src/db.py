@@ -22,13 +22,19 @@ class PanoDB:
             session.delete(result)
             session.commit()
 
-    def get_image(self, id: uuid.UUID | None=None, original_filename: str | None=None) -> Image | None:
+    def get_image(
+        self, id: uuid.UUID | None = None, original_filename: str | None = None
+    ) -> Image | None:
         with Session(self.engine, expire_on_commit=False) as session:
-            statement = select(Image).filter_by(id=id) if id else select(Image).filter_by(original_filename=original_filename)
+            statement = (
+                select(Image).filter_by(id=id)
+                if id
+                else select(Image).filter_by(original_filename=original_filename)
+            )
             row = session.execute(statement).first()
             if row:
                 return row[0]
-            #logging.warning(f"Could not find image. id={id}, original_filename={original_filename}")
+            # logging.warning(f"Could not find image. id={id}, original_filename={original_filename}")
             return None
 
     def get_all_images(
@@ -75,7 +81,9 @@ class PanoDB:
             statement = select(Image).filter_by(signature=signature)
             rows = session.execute(statement).fetchall()
             if len(rows) > 1:
-                logging.warning("get_image_by_signature returned more than 1 image. There are probably duplicate images.")
+                logging.warning(
+                    "get_image_by_signature returned more than 1 image. There are probably duplicate images."
+                )
             for r in rows:
                 images.append(r[0])
         return images
