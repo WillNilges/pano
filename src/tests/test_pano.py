@@ -31,6 +31,10 @@ SAMPLE_IMAGE_PATH_2 = "./src/tests/sample_images/logo.jpg"
 UUID_1 = uuid.UUID("8d2d5a8a-2941-433d-abc6-259b1b02e290")
 UUID_2 = uuid.UUID("b67bd7ba-a362-4d9c-931f-4ad2e9b33aed")
 
+UUID_20 = uuid.UUID("c67bd7ba-a362-4d9c-931f-4ad2e9b33abc")
+
+NN_UUID_1 = uuid.UUID("ad2d5a8a-2941-433d-abc6-259b1b02e291")
+
 
 class TestPano(unittest.TestCase):
     @patch("meshdb_client.MeshdbClient")
@@ -40,10 +44,21 @@ class TestPano(unittest.TestCase):
         self.minio = minio
         self.meshdb = meshdb
 
+        # Fake Install
         mock_install = MagicMock()
         mock_install.id = str(UUID_1)
         mock_install.node = None
         self.meshdb.get_install.return_value = mock_install
+
+        # Fake Node
+        mock_install_20 = MagicMock()
+        mock_install_20.id = str(UUID_20)
+        mock_install_20.node = None
+
+        mock_node = MagicMock()
+        mock_node.id = str(NN_UUID_1)
+        mock_node.install = mock_install_20
+        self.meshdb.get_node.return_value = mock_node
 
         self.session = Session(self.db.engine)
         self.pano = Pano(meshdb=self.meshdb, storage=self.minio, db=self.db)
@@ -123,12 +138,7 @@ class TestPano(unittest.TestCase):
         # Make sure there are no images in the DB
         self.assertEqual(0, len(images))
 
-    def test_get_images(self):
-        self.meshdb.get_primary_building_for_install.side_effect = [
-            SAMPLE_BUILDING,
-            SAMPLE_BUILDING,
-        ]
-
+    def test_get_images_by_install_number(self):
         r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
         self.assertEqual({}, r)
 
@@ -145,4 +155,23 @@ class TestPano(unittest.TestCase):
 
         self.assertEqual(UUID_1, all_images[1]["install_id"])
         self.assertEqual(None, all_images[1]["node_id"])
+        self.assertEqual("logo.jpg", all_images[1]["original_filename"])
+
+    def test_get_images_by_network_number(self):
+        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, None, NN_UUID_1)
+        self.assertEqual({}, r)
+
+        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH_2, None, NN_UUID_1)
+        self.assertEqual({}, r)
+
+        all_images, _ = self.pano.get_images_by_network_number(1)
+
+        self.assertEqual(2, len(all_images))
+
+        self.assertEqual(None, all_images[0]["install_id"])
+        self.assertEqual(NN_UUID_1, all_images[0]["node_id"])
+        self.assertEqual("pano.png", all_images[0]["original_filename"])
+
+        self.assertEqual(None, all_images[1]["install_id"])
+        self.assertEqual(NN_UUID_1, all_images[1]["node_id"])
         self.assertEqual("logo.jpg", all_images[1]["original_filename"])
