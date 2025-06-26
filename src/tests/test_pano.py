@@ -175,3 +175,15 @@ class TestPano(unittest.TestCase):
         self.assertEqual(None, all_images[1]["install_id"])
         self.assertEqual(NN_UUID_1, all_images[1]["node_id"])
         self.assertEqual("logo.jpg", all_images[1]["original_filename"])
+
+    def test_get_all_images(self):
+        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
+        self.assertEqual({}, r)
+
+        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH_2, None, NN_UUID_1)
+        self.assertEqual({}, r)
+
+        all_images = self.pano.get_all_images()
+        self.assertEqual(2, len(all_images.keys()))
+
+
