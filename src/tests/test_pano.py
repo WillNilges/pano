@@ -53,12 +53,15 @@ class TestPano(unittest.TestCase):
         # Fake Node
         mock_install_20 = MagicMock()
         mock_install_20.id = str(UUID_20)
-        mock_install_20.node = None
 
         mock_node = MagicMock()
         mock_node.id = str(NN_UUID_1)
-        mock_node.install = mock_install_20
+        mock_node.installs = [mock_install_20]
         self.meshdb.get_node.return_value = mock_node
+        self.mock_node = mock_node
+
+        mock_install_20.node = mock_node
+        self.mock_install_20 = mock_install_20
 
         self.session = Session(self.db.engine)
         self.pano = Pano(meshdb=self.meshdb, storage=self.minio, db=self.db)
@@ -185,5 +188,18 @@ class TestPano(unittest.TestCase):
 
         all_images = self.pano.get_all_images()
         self.assertEqual(2, len(all_images.keys()))
+
+    def test_get_related_images(self):
+        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_20)
+        self.assertEqual({}, r)
+
+        r = self.pano.handle_upload(SAMPLE_IMAGE_PATH_2, None, NN_UUID_1)
+        self.assertEqual({}, r)
+
+        all_images = self.pano.get_related_images_from_node(self.mock_node)
+        self.assertEqual(1, len(all_images.keys()))
+
+        all_images = self.pano.get_related_images_from_install(self.mock_install_20)
+        self.assertEqual(1, len(all_images.keys()))
 
 
