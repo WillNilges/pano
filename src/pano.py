@@ -2,12 +2,14 @@ import dataclasses
 from datetime import datetime
 import logging
 import uuid
-from typing import Optional
+from typing import Any, Optional
 
 from db import PanoDB
 from meshdb_client import MeshdbClient
 from models.image import Image
 from models.panorama import Panorama
+from pymeshdb.models.install import Install
+from pymeshdb.models.node import Node
 from storage_minio import StorageMinio
 from werkzeug.exceptions import NotFound
 
@@ -25,7 +27,7 @@ class Pano:
 
     def get_all_images(self) -> dict[int, list[dict]]:
         serialized_images = {}
-        for image in self.db.get_images():
+        for image in self.db.get_all_images():
             if not serialized_images.get(image.install_id):
                 serialized_images[image.install_id] = []
 
@@ -34,38 +36,91 @@ class Pano:
             serialized_images[image.install_id].append(i)
         return serialized_images
 
-    def get_images(
-        self, install_number: int | None = None, network_number: int | None = None
-    ) -> list[dict]:
+    def get_images_by_install_number(
+        self,
+        install_number: int,
+        get_related: bool = False,
+    ) -> tuple[list[dict], dict[str, list[dict]]]:
         install_id = None
-        node_id = None
 
-        if install_number:
-            install = self.meshdb.get_install(install_number)
-            if not install:
-                raise NotFound(
-                    "Could not resolve new install number. Is this a valid install?"
-                )
+        install = self.meshdb.get_install(install_number)
+        if not install:
+            raise NotFound(
+                "Could not resolve new install number. Is this a valid install?"
+            )
 
-            install_id = uuid.UUID(install.id)
+        install_id = uuid.UUID(install.id)
 
-        if network_number:
-            node = self.meshdb.get_node(network_number)
-            if not node:
-                raise NotFound(
-                    "Could not resolve network number. Is this a valid network number?"
-                )
-
-            node_id = uuid.UUID(node.id)
-
-        images = self.db.get_images(install_id=install_id, node_id=node_id)
+        images = self.db.get_images_by_install_id(install_id)
         serialized_images = []
         for image in images:
-            i = dataclasses.asdict(image)
-            i["url"] = self.storage.get_presigned_url(image)
-            serialized_images.append(i)
+            serialized_images.append(self.serialize_image(image))
 
-        return serialized_images
+        related_images = {}
+        if get_related:
+            related_images = self.get_related_images_from_install(install)
+
+        return serialized_images, related_images
+
+    def get_related_images_from_install(
+        self, install: Install
+    ) -> dict[str, list[dict]]:
+        # Get images from node if it exists
+        additional_images_by_network_number = {}
+        if install.node:
+            node_images = self.db.get_images_by_node_id(uuid.UUID(install.node.id))
+            additional_images = []
+            for image in node_images:
+                additional_images.append(self.serialize_image(image))
+            additional_images_by_network_number[
+                install.node.network_number
+            ] = additional_images
+        return additional_images_by_network_number
+
+    def get_images_by_network_number(
+        self,
+        network_number: int,
+        get_related: bool = False,
+    ) -> tuple[list[dict], dict[str, list[dict]]]:
+        node_id = None
+
+        node = self.meshdb.get_node(network_number)
+        if not node:
+            raise NotFound(
+                "Could not resolve network number. Is this a valid network number?"
+            )
+
+        node_id = uuid.UUID(node.id)
+
+        images = self.db.get_images_by_node_id(node_id)
+        serialized_images = []
+        for image in images:
+            serialized_images.append(self.serialize_image(image))
+
+        related_images = {}
+        if get_related:
+            related_images = self.get_related_images_from_node(node)
+
+        return serialized_images, related_images
+
+    def get_related_images_from_node(self, node: Node) -> dict[str, list[dict]]:
+        # Get images from related installs
+        additional_images_by_install_number = {}
+        for install in node.installs:
+            if install.id:
+                install_images = self.db.get_images_by_install_id(uuid.UUID(install.id))
+                additional_images = []
+                for image in install_images:
+                    additional_images.append(self.serialize_image(image))
+                additional_images_by_install_number[
+                    install.install_number
+                ] = additional_images
+        return additional_images_by_install_number
+
+    def serialize_image(self, image: Image) -> dict[str, Any]:
+        i = dataclasses.asdict(image)
+        i["url"] = self.storage.get_presigned_url(image)
+        return i
 
     # TODO: How to update order?
     def update_image(
@@ -158,7 +213,7 @@ class Pano:
         possible_duplicates = {}
 
         # Get any images we already uploaded for this install
-        images = self.db.get_images(signature=uploaded_image.signature)
+        images = self.db.get_image_by_signature(uploaded_image.signature)
         for i in images:
             if uploaded_image.signature in i.signature:
                 possible_duplicates[

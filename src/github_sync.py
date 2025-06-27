@@ -17,11 +17,13 @@ log = logging.getLogger("pano")
 
 pano = Pano()
 
+
 class CloneProgress(git.remote.RemoteProgress):
     def update(self, *args, **kwargs):
         # This method is called during the cloning process
-        if 'info' in kwargs:
-            print(kwargs['info'].strip())
+        if "info" in kwargs:
+            print(kwargs["info"].strip())
+
 
 def manage_repo(repo_path, repo_url):
     # Check if the repository exists at the specified path
@@ -39,23 +41,24 @@ def manage_repo(repo_path, repo_url):
         try:
             # Clone the repository since it does not exist
             print(f"Cloning repository from {repo_url} to {repo_path}...")
-            Repo.clone_from(repo_url, repo_path)#, progress=CloneProgress())
+            Repo.clone_from(repo_url, repo_path)  # , progress=CloneProgress())
             print("Repository cloned successfully.")
         except GitCommandError as e:
             print(f"Error while cloning the repository: {e}")
 
+
 def github_sync():
     parser = argparse.ArgumentParser(
-        prog='Pano Node-DB Importer',
+        prog="Pano Node-DB Importer",
         description="""
         Clones/pulls the repo to a known location (some mounted volume, most likely)
         and compares the files found in data/panoramas with the file titles in the DB,
         then goes through basically upload() for each file it does not have.
         """,
-        epilog='Chom E :)'
+        epilog="Chom E :)",
     )
 
-    parser.add_argument('-w', '--write', action="store_true")
+    parser.add_argument("-w", "--write", action="store_true")
 
     args = parser.parse_args()
 
@@ -70,7 +73,7 @@ def github_sync():
 
     # Find files that already exist
     node_db_panoramas = set(os.listdir(f"{repo_path}/data/panoramas"))
-    pano_panoramas = {item.original_filename for item in pano.db.get_images()}
+    pano_panoramas = {item.original_filename for item in pano.db.get_all_images()}
 
     new_panoramas = node_db_panoramas.difference(pano_panoramas)
 
@@ -78,29 +81,31 @@ def github_sync():
 
     for file_name in new_panoramas:
         log.info(f"Processing {file_name}")
-        #existing_image = pano.db.get_image(original_filename=file_name)
-        #if existing_image:
+        # existing_image = pano.db.get_image(original_filename=file_name)
+        # if existing_image:
         #    continue
 
         install_id = None
         node_id = None
 
         # Get the number.
-        pattern = r'\d+'
+        pattern = r"\d+"
 
         # Search for the first match
         match = re.search(pattern, file_name)
 
         # Check if a match was found and print it
         if not match:
-            log.warning(f"Could not parse number from {file_name}. Filename might be invalid.")
+            log.warning(
+                f"Could not parse number from {file_name}. Filename might be invalid."
+            )
             continue
 
         first_match = match.group()
 
         # FIXME (wdn): Code duplication :(
         if "nn" in file_name:
-            network_number = int(first_match) 
+            network_number = int(first_match)
             log.info(f"Network Number = {network_number}")
             node = pano.meshdb.get_node(network_number)
             if not node:
@@ -113,19 +118,27 @@ def github_sync():
             log.info(f"Install Number = {install_number}")
             install = pano.meshdb.get_install(install_number)
             if not install:
-                log.warning(f"Failed to resolve install# {install_number} to install_id.")
+                log.warning(
+                    f"Failed to resolve install# {install_number} to install_id."
+                )
                 continue
             install_id = uuid.UUID(install.id)
-            log.info(f"Successfully resolved install# {install_number} to install_id {install_id}")
+            log.info(
+                f"Successfully resolved install# {install_number} to install_id {install_id}"
+            )
 
         if args.write:
             try:
                 pano.handle_upload(
-                    f"{repo_path}/data/panoramas/{file_name}", install_id, node_id, False 
+                    f"{repo_path}/data/panoramas/{file_name}",
+                    install_id,
+                    node_id,
+                    False,
                 )
                 log.info("Write successful.")
             except Exception:
                 log.exception("Could not save panorama.")
+
 
 if __name__ == "__main__":
     github_sync()

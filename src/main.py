@@ -4,6 +4,7 @@ import os
 import shutil
 import uuid
 from datetime import timedelta
+import html
 
 import argparse
 
@@ -26,6 +27,8 @@ from settings import UPLOAD_DIRECTORY, WORKING_DIRECTORY
 from models.user import User
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+
+NETWORK_NUMBER_MAX = 8000
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -81,50 +84,115 @@ def allowed_file(filename):
 class IdResolutionError(Exception):
     pass
 
+
 class IdNotFoundError(IdResolutionError):
     pass
 
 
 @app.route("/api/v1/image/<image_id>")
-def get_image_by_image_id(image_id: uuid.UUID):
-    image = pano.db.get_image(image_id)
+def get_image_by_image_id(image_id: str):
+    image_uuid = None
+    try:
+        image_uuid = uuid.UUID(image_id)
+    except ValueError:
+        error = f"get_image_by_image_id failed: {html.escape(image_id)} is not a valid UUID."
+        log.exception(error)
+        return {"detail": error}, 400
+
+    if not image_uuid:
+        log.error("Could not GET image. image_id not provided")
+        return {"detail": "image_id not provided."}, 400
+
+    image = pano.db.get_image(image_uuid)
     if not image:
         error = f"Image {image_id} not found."
         log.error(error)
         return {"detail": error}, 404
     i = dataclasses.asdict(image)
     i["url"] = pano.storage.get_presigned_url(image)
-
     return i, 200
 
 
 @app.route("/api/v1/install/<install_number>")
-@app.route("/api/v1/nn/<network_number>")
-def get_images_by_meshdb_object(install_number: int | None = None, network_number: int | None = None):
+def get_images_by_install_number(install_number: str):
+    install_number_int = None
+    get_related = False
     try:
-        j = jsonify(
-            pano.get_images(
-                install_number=int(install_number) if install_number else None,
-                network_number=int(network_number) if network_number else None,
-            )
-        )
-        return j, 200
+        install_number_int = int(install_number)
+        get_related = bool(request.values.get("get_related"))
     except ValueError:
-        error = (
-            f"{install_number if install_number else network_number} is not an integer."
-        )
+        error = f"{html.escape(str(install_number))} is not an integer."
         logging.exception(error)
         return {"detail": error}, 400
+
+    if not install_number_int:
+        return {"detail": "install_number not provided."}, 400
+
+    try:
+        images, additional_images = pano.get_images_by_install_number(
+            install_number_int, get_related
+        )
     except NotFoundException:
-        error = f"Could not find {install_number if install_number else network_number}. Consult MeshDB to make sure the object exists."
+        error = f"Could not find {html.escape(str(install_number))}. Consult MeshDB to make sure the object exists."
         logging.exception(error)
         return {"detail": error}, 404
 
+    j = {"images": images, "additional_images": additional_images}
+    return j, 200
 
-@app.route("/api/v1/update", methods=["POST"])
+
+@app.route("/api/v1/nn/<network_number>")
+def get_images_by_network_number(network_number: str):
+    nn = None
+    get_related = False
+    try:
+        nn = int(network_number)
+        get_related = bool(request.values.get("get_related"))
+    except ValueError:
+        error = f"{html.escape(str(network_number))} is not an integer."
+        logging.exception(error)
+        return {"detail": error}, 400
+
+    if not nn:
+        return {"detail": "network_number not provided."}, 400
+
+    if nn > NETWORK_NUMBER_MAX:
+        return {"detail": "Please enter a NN <= 8000"}, 403
+
+    try:
+        images, additional_images = pano.get_images_by_network_number(nn, get_related)
+    except NotFoundException:
+        error = f"Could not find {network_number}. Consult MeshDB to make sure the object exists."
+        logging.exception(error)
+        return {"detail": error}, 404
+
+    j = {"images": images, "additional_images": additional_images}
+    return j, 200
+
+
+@app.route("/api/v1/image/<image_id>", methods=["DELETE"])
 @login_required
-def update():
-    id = request.values.get("id")
+def delete_image(image_id: str):
+    raise NotImplemented
+
+
+# Upadte a particular image
+@app.route("/api/v1/image/<image_id>", methods=["PUT"])
+@login_required
+def update_image(image_id: str):
+    image_uuid = None
+    try:
+        image_uuid = uuid.UUID(image_id)
+    except ValueError:
+        error = f"get_image_by_image_id failed: {html.escape(image_id)} is not a valid UUID."
+        log.exception(error)
+        return {"detail": error}, 403
+
+    if not image_uuid:
+        log.error("Could not PUT image. image_id not provided")
+        return {"detail": "image_id not provided."}, 403
+
+    # TODO: (wdn) Use NN or Install #
     new_install_number = request.values.get("new_install_number")
 
     # check if the post request has the file part
@@ -165,13 +233,14 @@ def update():
     file.save(file_path)
 
     image = pano.update_image(
-        uuid.UUID(id),
+        image_uuid,
         int(new_install_number) if new_install_number else None,
         file_path,
     )
     return jsonify(image), 200
 
 
+# Process image upload request.
 @app.route("/api/v1/upload", methods=["POST"])
 @login_required
 def upload():
@@ -218,7 +287,9 @@ def upload():
                     os.makedirs(UPLOAD_DIRECTORY)
                 except:
                     log.error(f"Could not create {UPLOAD_DIRECTORY}")
-                    return {"detail": "There was a problem processing your upload."}, 500
+                    return {
+                        "detail": "There was a problem processing your upload."
+                    }, 500
 
             # Save the file to local storage
             file_path = os.path.join(UPLOAD_DIRECTORY, filename)
@@ -236,9 +307,7 @@ def upload():
                     possible_duplicates.update(d)
                     continue
             except ValueError as e:
-                logging.exception(
-                    "Error processing this panorama upload"
-                )
+                logging.exception("Error processing this panorama upload")
                 return {
                     "detail": "Something went wrong processing this panorama upload"
                 }, 400
