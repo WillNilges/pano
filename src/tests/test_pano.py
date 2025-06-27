@@ -201,5 +201,3 @@ class TestPano(unittest.TestCase):
 
         all_images = self.pano.get_related_images_from_install(self.mock_install_20)
         self.assertEqual(1, len(all_images.keys()))
-
-

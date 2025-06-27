@@ -20,6 +20,7 @@ from models.user import User
 from pano import Pano
 import pytest
 from flask import Flask
+from .test_pano import NN_UUID_1
 from . import SAMPLE_IMAGE_PATH, UUID_1
 from src.main import app
 
@@ -51,12 +52,28 @@ class TestAPI(unittest.TestCase):
         self.maxDiff = None
         self.assertEqual(uuid.UUID(response.json["id"]), image_object.id)
 
+    @patch("main.pano.db.get_image")
+    @patch("main.Pano.get_images_by_network_number")
+    def test_get_image_by_node_id(self, mock_pano, mock_db):
+        image_object = Panorama(path=SAMPLE_IMAGE_PATH, node_id=NN_UUID_1)
+        serialized_image_object = self.pano.serialize_image(image_object)
+        mock_pano.return_value = ([serialized_image_object], {})
+        mock_db.return_value = image_object
+
+        response = self.client.get("/api/v1/nn/1")
+        image_id = response.json["images"][0]["id"]
+        self.assertEqual(uuid.UUID(image_id), image_object.id)
+
+        response = self.client.get(f"/api/v1/image/{image_object.id}")
+        self.maxDiff = None
+        self.assertEqual(uuid.UUID(response.json["id"]), image_object.id)
 
     def test_get_image_by_image_id_bad_requests(self):
         invalid_id = "chom"
         response = self.client.get(f"/api/v1/image/{invalid_id}")
         assert response.status_code == 400
         assert response.json
+
         assert (
             response.json["detail"]
             == f"get_image_by_image_id failed: {invalid_id} is not a valid UUID."
