@@ -14,6 +14,8 @@ import unittest
 from unittest.mock import patch
 import uuid
 from flask_login import FlaskLoginClient
+from models.image import Image
+from models.panorama import Panorama
 from models.user import User
 from pano import Pano
 import pytest
@@ -32,6 +34,23 @@ class TestAPI(unittest.TestCase):
         with app.test_client() as client:
             self.client = client
         self.pano.handle_upload(SAMPLE_IMAGE_PATH, UUID_1)
+
+    @patch("main.pano.db.get_image")
+    @patch("main.Pano.get_images_by_install_number")
+    def test_get_image_by_image_id(self, mock_pano, mock_db):
+        image_object = Panorama(path=SAMPLE_IMAGE_PATH, install_id=UUID_1, node_id=None)
+        serialized_image_object = self.pano.serialize_image(image_object)
+        mock_pano.return_value = ([serialized_image_object], {})
+        mock_db.return_value = image_object
+
+        response = self.client.get("/api/v1/install/1")
+        image_id = response.json["images"][0]["id"]
+        self.assertEqual(uuid.UUID(image_id), image_object.id)
+
+        response = self.client.get(f"/api/v1/image/{image_object.id}")
+        self.maxDiff = None
+        self.assertEqual(uuid.UUID(response.json["id"]), image_object.id)
+
 
     def test_get_image_by_image_id_bad_requests(self):
         invalid_id = "chom"
