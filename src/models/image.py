@@ -22,6 +22,7 @@ class Image(Base):
     # The name of the file when it was uploaded
     original_filename: Mapped[str] = mapped_column()
     public: Mapped[bool] = mapped_column()
+    start: Mapped[bool] = mapped_column()
 
     __table_args__ = (
         CheckConstraint(
