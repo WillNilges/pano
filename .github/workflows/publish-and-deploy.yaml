@@ -3,11 +3,11 @@ name: Publish and Deploy
 
 on:
   push:
-    branches: [ main, wdn/related-nodes ]
+    branches: [ main, wdn/dev ]
   workflow_dispatch:
     branches:
       - main
-      - wdn/related-nodes
+      - wdn/dev
 
 permissions: read-all
 
