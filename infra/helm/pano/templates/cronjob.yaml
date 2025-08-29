@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: import-panoramas-from-node-db
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: import-panoramas-from-node-db
+            image: "{{ .Values.image.repository }}@{{ .Values.image.digest }}"
+            imagePullPolicy: IfNotPresent
+            command:
+            - python src/github_sync.py
+            envFrom:
+              - configMapRef:
+                  name: pano-config
+              - secretRef:
+                  name: pano-secrets
+          restartPolicy: Never
+          concurrencyPolicy: Forbid
+          backoffLimit: 0
