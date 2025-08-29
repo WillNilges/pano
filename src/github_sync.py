@@ -79,6 +79,8 @@ def github_sync():
 
     log.info(f"node-db has {len(new_panoramas)} images we don't have.")
 
+    # FIXME: (wdn) - We need to catch pymeshdb.exceptions.NotFoundException for
+    # installs and nodes here. The exceptions pollute the logs
     for file_name in new_panoramas:
         log.info(f"Processing {file_name}")
         # existing_image = pano.db.get_image(original_filename=file_name)

@@ -7,9 +7,11 @@ from typing import Any, Optional
 from db import PanoDB
 from meshdb_client import MeshdbClient
 from models.image import Image
+from wand.image import Image as WandImage
 from models.panorama import Panorama
 from pymeshdb.models.install import Install
 from pymeshdb.models.node import Node
+from settings import GARAGE_THUMBS_BUCKET
 from storage_minio import StorageMinio
 from werkzeug.exceptions import NotFound
 
@@ -20,10 +22,12 @@ class Pano:
         meshdb: MeshdbClient = MeshdbClient(),
         storage: StorageMinio = StorageMinio(),
         db: PanoDB = PanoDB(),
+        thumbs: StorageMinio = StorageMinio(bucket=GARAGE_THUMBS_BUCKET),
     ) -> None:
         self.meshdb: MeshdbClient = meshdb
         self.storage: StorageMinio = storage
         self.db: PanoDB = db
+        self.thumbs: StorageMinio = thumbs
 
     def get_all_images(self) -> dict[int, list[dict]]:
         serialized_images = {}
@@ -194,6 +198,20 @@ class Pano:
         # Upload object to S3
         try:
             self.storage.upload_objects({image_object.object_path(): file_path})
+        except Exception as e:
+            logging.exception("Failed to upload object to S3.")
+            raise e
+
+        # Also make a thumbnail
+        with WandImage(filename=file_path) as thumb:
+            thumb.compression_quality = 50
+
+            # Save the image as a JPEG
+            tmp_thumb_path = "/tmp/pano_thumb.jpg"
+            thumb.save(filename=tmp_thumb_path)
+
+        try:
+            self.thumbs.upload_objects({image_object.object_path(): tmp_thumb_path})
         except Exception as e:
             logging.exception("Failed to upload object to S3.")
             raise e
