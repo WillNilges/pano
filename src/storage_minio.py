@@ -7,7 +7,8 @@ from minio import Minio
 from wand.image import Image as WandImage
 
 from models.image import Image
-from settings import GARAGE_BUCKET, GARAGE_SECURE, GARAGE_THUMBS_BUCKET, GARAGE_URL, WORKING_DIRECTORY
+from settings import GARAGE_BUCKET, GARAGE_SECURE, GARAGE_URL, WORKING_DIRECTORY
+from storage import Storage
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -15,8 +16,8 @@ logging.basicConfig(
 log = logging.getLogger("pano.storage_minio")
 
 
-class StorageMinio():
-    def __init__(self, bucket: str = GARAGE_BUCKET, thumbs: str = GARAGE_THUMBS_BUCKET) -> None:
+class StorageMinio(Storage):
+    def __init__(self, bucket: str = GARAGE_BUCKET) -> None:
         log.info("Configuring Minio Storage...")
         # Get env vars like this so that we crash if they're missing
         garage_url = GARAGE_URL
@@ -25,7 +26,6 @@ class StorageMinio():
         log.info("Loaded credentials.")
 
         self.bucket = bucket
-        self.thumbs = thumbs
         minio_secure = GARAGE_SECURE
         log.info(f"URL: {garage_url}, bucket: {bucket}, secure: {minio_secure}")
 
@@ -57,6 +57,20 @@ class StorageMinio():
                 file,
             )
             log.info(f"Uploaded {file} to {path} in {self.bucket}")
+
+    def download_objects(self, objects: list[str]) -> list[str]:
+        images = []
+        try:
+            for object_name in objects:
+                title = object_name.split("/")[-1]
+                path = f"{WORKING_DIRECTORY}/minio/{title}"
+                self.client.fget_object(self.bucket, object_name, path)
+                images.append(path)
+        except Exception:  # TODO: Better error handling?
+            logging.exception("Could not download some images")
+            return []
+
+        return images
 
     def list_all_objects(self, install_number: int) -> list[str]:
         objects = []

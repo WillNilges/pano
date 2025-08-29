@@ -109,8 +109,7 @@ def get_image_by_image_id(image_id: str):
         error = f"Image {image_id} not found."
         log.error(error)
         return {"detail": error}, 404
-    i = dataclasses.asdict(image)
-    i["url"] = pano.storage.get_presigned_url(image)
+    i = pano.serialize_image(image)
     return i, 200
 
 
@@ -181,6 +180,7 @@ def delete_image(image_id: str):
 @app.route("/api/v1/image/<image_id>", methods=["PUT"])
 @login_required
 def update_image(image_id: str):
+    log.info(f"Updating image {image_id}")
     image_uuid = None
     try:
         image_uuid = uuid.UUID(image_id)

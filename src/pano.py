@@ -124,9 +124,9 @@ class Pano:
     def serialize_image(self, image: Image) -> dict[str, Any]:
         i = dataclasses.asdict(image)
         i["url"] = self.storage.get_presigned_url(image)
+        i["thumb"] = self.thumbs.get_presigned_url(image)
         return i
 
-    # TODO: How to update order?
     def update_image(
         self,
         id: uuid.UUID,
@@ -168,16 +168,15 @@ class Pano:
                 logging.exception("Failed to upload object to S3.")
                 raise e
 
+            self.create_thumbnail(image, file_path)
+
         # Update the timestamp of the image
         image.timestamp = datetime.now()
 
         # If all of that worked, save the image.
         self.db.save_image(image)
 
-        image_dict = dataclasses.asdict(image)
-        image_dict["url"] = self.storage.get_presigned_url(image)
-
-        return image_dict
+        return self.serialize_image(image)
 
     def handle_upload(
         self,
@@ -203,23 +202,25 @@ class Pano:
             raise e
 
         # Also make a thumbnail
+        self.create_thumbnail(image_object, file_path)
+
+        self.db.save_image(image_object)
+
+        # Empty Dict = No Dupes; We're good.
+        return {}
+
+    def create_thumbnail(self, image_object: Image, file_path: str):
         with WandImage(filename=file_path) as thumb:
             thumb.compression_quality = 50
 
             # Save the image as a JPEG
             tmp_thumb_path = "/tmp/pano_thumb.jpg"
             thumb.save(filename=tmp_thumb_path)
-
         try:
             self.thumbs.upload_objects({image_object.object_path(): tmp_thumb_path})
         except Exception as e:
             logging.exception("Failed to upload object to S3.")
             raise e
-
-        self.db.save_image(image_object)
-
-        # Empty Dict = No Dupes; We're good.
-        return {}
 
     def detect_duplicates(self, uploaded_image: Image) -> dict[str, str]:
         """
