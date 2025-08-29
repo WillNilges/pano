@@ -31,20 +31,20 @@ def manage_repo(repo_path, repo_url):
         try:
             # Attempt to open the existing repository
             repo = Repo(repo_path)
-            print(f"Repository found at {repo_path}. Pulling latest changes...")
+            log.info(f"Repository found at {repo_path}. Pulling latest changes...")
             # Pull the latest changes
             repo.remotes.origin.pull()
-            print("Repository updated successfully.")
+            log.info("Repository updated successfully.")
         except GitCommandError as e:
-            print(f"Error while pulling the repository: {e}")
+            log.error(f"Error while pulling the repository: {e}")
     else:
         try:
             # Clone the repository since it does not exist
-            print(f"Cloning repository from {repo_url} to {repo_path}...")
+            log.info(f"Cloning repository from {repo_url} to {repo_path}...")
             Repo.clone_from(repo_url, repo_path)  # , progress=CloneProgress())
-            print("Repository cloned successfully.")
+            log.info("Repository cloned successfully.")
         except GitCommandError as e:
-            print(f"Error while cloning the repository: {e}")
+            log.error(f"Error while cloning the repository: {e}")
 
 
 def github_sync():
@@ -53,7 +53,7 @@ def github_sync():
         description="""
         Clones/pulls the repo to a known location (some mounted volume, most likely)
         and compares the files found in data/panoramas with the file titles in the DB,
-        then goes through basically upload() for each file it does not have.
+        then goes through upload() for each file it does not have.
         """,
         epilog="Chom E :)",
     )
@@ -67,7 +67,7 @@ def github_sync():
         log.error("Please specify NODE_DB_PATH in the environment.")
         return
 
-    repository_url = "https://github.com/nycmeshnet/node-db.git"  # Change this to your repository URL
+    repository_url = "https://github.com/nycmeshnet/node-db.git" 
 
     manage_repo(repo_path, repository_url)
 

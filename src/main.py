@@ -41,6 +41,7 @@ app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
 app.config["UPLOAD_FOLDER"] = UPLOAD_DIRECTORY
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1000 * 1000
+# FIXME: (wdn) - This probably isn't great lol
 app.config["SECRET_KEY"] = "chomskz"
 
 allowed_origins = {

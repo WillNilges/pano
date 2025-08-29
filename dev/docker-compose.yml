@@ -14,7 +14,7 @@ services:
     networks:
       - pano-dev-network
   garage:
-    image: dxflrs/garage:v1.1.0
+    image: docker.io/dxflrs/garage:v1.1.0
     restart: unless-stopped
     ports:
       - 3900:3900
