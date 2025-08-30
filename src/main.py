@@ -173,7 +173,14 @@ def get_images_by_network_number(network_number: str):
 @app.route("/api/v1/image/<image_id>", methods=["DELETE"])
 @login_required
 def delete_image(image_id: str):
-    raise NotImplemented
+    # Delete image and thumbnail from S3 bucket
+    pano.storage.delete_objects([image_id])
+    pano.thumbs.delete_objects([image_id])
+    # Delete Image object from DB
+    pano.db.delete_image(uuid.UUID(image_id))
+
+    j = {}
+    return j, 200 # TODO (wdn): What is the correct status code?
 
 
 # Upadte a particular image
