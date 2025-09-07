@@ -15,6 +15,9 @@ from settings import GARAGE_THUMBS_BUCKET
 from storage_minio import StorageMinio
 from werkzeug.exceptions import NotFound
 
+from PIL import Image
+from PIL.ExifTags import TAGS
+
 
 class Pano:
     def __init__(
@@ -126,6 +129,34 @@ class Pano:
         i["url"] = self.storage.get_presigned_url(image)
         i["thumb"] = self.thumbs.get_presigned_url(image)
         return i
+
+    def get_exif_data(self, image: Image) -> dict[str, str]:
+        # TODO: Get DateTime
+
+        print(f"Retrieving EXIF data for image: {image}")
+
+        # Download the image from S3
+
+        # open the image
+        image = Image.open(f"{dir}/{filename}")
+
+        # extracting the exif metadata
+        exifdata = image.getexif()
+
+        tags = {}
+
+        # looping through all the tags present in exifdata
+        for tagid in exifdata:
+            
+            # getting the tag name instead of tag id
+            tagname = TAGS.get(tagid, tagid)
+
+            # passing the tagid to get its respective value
+            value = exifdata.get(tagid)
+
+            tags[tagname] = value
+
+        return tags
 
     def update_image(
         self,
