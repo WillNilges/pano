@@ -180,7 +180,7 @@ def delete_image(image_id: str):
     pano.db.delete_image(uuid.UUID(image_id))
 
     j = {}
-    return j, 200 # TODO (wdn): What is the correct status code?
+    return j, 204
 
 
 # Upadte a particular image

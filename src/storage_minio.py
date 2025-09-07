@@ -1,4 +1,5 @@
 import logging
+import mimetypes
 import os
 import uuid
 from pathlib import PurePosixPath
@@ -51,12 +52,15 @@ class StorageMinio(Storage):
 
     def upload_objects(self, objects: dict[str, str]) -> None:
         for path, file in objects.items():
-            # TODO (wdn): Deduce content type from the file (there is probably
-            # a lib for this)
+            # Deduce content type from the file
+            mime_type, _ = mimetypes.guess_type(file)
+            log.info("File MIME Type: " + mime_type)
+
             self.client.fput_object(
                 self.bucket,
                 path,
                 file,
+                content_type=mime_type,
             )
             log.info(f"Uploaded {file} to {path} in {self.bucket}")
 
