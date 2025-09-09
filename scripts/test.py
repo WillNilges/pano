@@ -1,6 +1,7 @@
 from PIL import Image
 from PIL.ExifTags import TAGS
 import os
+from datetime import datetime
 
 dir = "/home/wilnil/Code/nycmeshnet/node-db/data/panoramas"
 
@@ -25,5 +26,10 @@ for filename in os.listdir(dir):
           
             # printing the final result
             print(f"{tagname:25}: {value}")
+
+            if value and tagname == "DateTime":
+                date_time_obj = datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
+                print(f"DATETIME: {date_time_obj}")
+
     except Exception:
         print("Couldn't get exif data.")

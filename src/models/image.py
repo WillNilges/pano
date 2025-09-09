@@ -5,9 +5,12 @@ from datetime import datetime
 from pathlib import PurePosixPath
 from sqlalchemy import CheckConstraint, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
+from util.exif import get_exif_data
 from wand.image import Image as WandImage
 from models.base import Base
 
+
+log = logging.getLogger("image")
 
 @dataclass
 class Image(Base):
@@ -39,8 +42,16 @@ class Image(Base):
         public: bool = False,
     ):
         self.id = uuid.uuid4()
-        self.timestamp = datetime.now()  # TODO: Extract from image metadata
         self.public = public
+
+        try:
+            exif_timestamp_str = get_exif_data(path)["DateTime"]
+            timestamp = datetime.strptime(exif_timestamp_str, "%Y:%m:%d %H:%M:%S")
+            self.timestamp = timestamp
+        except Exception:
+            now = datetime.now()
+            log.warning(f"Could not extract timestamp from EXIF data. Setting to {now}")
+            self.timestamp = now
 
         # The constraint should save us here but why not add redundancy
         if install_id and node_id:
