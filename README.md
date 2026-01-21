@@ -90,7 +90,7 @@ If you're getting 403's, check that you ran `create_groups` in your MeshDB Dev e
 
 ## Garage Setup
 
-Garage has a slightly more involved setup than garage (whom we migrated off of due to garage becoming hostile to open source)
+Garage has a slightly more involved setup than MinIO (whom we migrated off of due to becoming [hostile to open source](https://github.com/minio/minio/commit/be7800c8136eadff2ba012412dd6c2e5fdcb548a))
 
 https://garagehq.deuxfleurs.fr/documentation/quick-start/
 
