@@ -109,8 +109,7 @@ def get_image_by_image_id(image_id: str):
         error = f"Image {image_id} not found."
         log.error(error)
         return {"detail": error}, 404
-    i = dataclasses.asdict(image)
-    i["url"] = pano.storage.get_presigned_url(image)
+    i = pano.serialize_image(image)
     return i, 200
 
 
@@ -174,13 +173,21 @@ def get_images_by_network_number(network_number: str):
 @app.route("/api/v1/image/<image_id>", methods=["DELETE"])
 @login_required
 def delete_image(image_id: str):
-    raise NotImplemented
+    # Delete image and thumbnail from S3 bucket
+    pano.storage.delete_objects([image_id])
+    pano.thumbs.delete_objects([image_id])
+    # Delete Image object from DB
+    pano.db.delete_image(uuid.UUID(image_id))
+
+    j = {}
+    return j, 200 # TODO (wdn): What is the correct status code?
 
 
 # Upadte a particular image
 @app.route("/api/v1/image/<image_id>", methods=["PUT"])
 @login_required
 def update_image(image_id: str):
+    log.info(f"Updating image {image_id}")
     image_uuid = None
     try:
         image_uuid = uuid.UUID(image_id)

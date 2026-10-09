@@ -51,12 +51,19 @@ class StorageMinio(Storage):
 
     def upload_objects(self, objects: dict[str, str]) -> None:
         for path, file in objects.items():
+            # TODO (wdn): Deduce content type from the file (there is probably
+            # a lib for this)
             self.client.fput_object(
                 self.bucket,
                 path,
                 file,
             )
             log.info(f"Uploaded {file} to {path} in {self.bucket}")
+
+    def delete_objects(self, objects: list[str]) -> None:
+        for path in objects:
+            self.client.remove_object(self.bucket, path)
+            log.info(f"Deleted {path} from {self.bucket}")
 
     def download_objects(self, objects: list[str]) -> list[str]:
         images = []
