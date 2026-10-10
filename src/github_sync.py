@@ -67,7 +67,7 @@ def github_sync():
         log.error("Please specify NODE_DB_PATH in the environment.")
         return
 
-    repository_url = "https://github.com/nycmeshnet/node-db.git" 
+    repository_url = "https://github.com/nycmeshnet/node-db.git"
 
     manage_repo(repo_path, repository_url)
 

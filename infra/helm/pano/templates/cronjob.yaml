@@ -13,7 +13,9 @@ spec:
             image: "{{ .Values.image.repository }}@{{ .Values.image.digest }}"
             imagePullPolicy: IfNotPresent
             command:
-            - python src/github_sync.py
+            - /usr/local/bin/python
+            - /opt/pano/github_sync.py
+            - --write
             envFrom:
               - configMapRef:
                   name: pano-config
